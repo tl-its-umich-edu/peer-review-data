@@ -1,0 +1,10 @@
+version: '3.9'
+
+services:
+  main:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      API_TOKEN: ABCD
+    container_name: peer-review-data_main
