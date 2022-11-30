@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    environment:
-      API_TOKEN: ABCD
+    env_file:
+      - .env
     container_name: peer-review-data_main
+    volumes:
+      - ./:/app
