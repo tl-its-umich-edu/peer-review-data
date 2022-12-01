@@ -22,12 +22,19 @@ class CanvasAssignment(Assignment):
     peer_reviews: bool
     automatic_peer_reviews: bool
     anonymous_peer_reviews: bool
+    rubric_settings: dict
 
 
 course = canvas.get_course(COURSE_ID)
 assignment: CanvasAssignment = course.get_assignment(ASSIGNMENT_ID)
 
-print(repr(assignment))
-print(assignment.description)
+# print(repr(assignment))
+# print(assignment.description)
 print(assignment.id)
 print(assignment.peer_reviews)
+print(assignment.rubric_settings)
+
+peerReviews = assignment.get_peer_reviews(include='submission_comments')
+
+# review comments are from instructor/TA, NOT the reviewer
+print(repr(peerReviews[0]))
