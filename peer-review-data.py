@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import os
 
 from canvasapi import Canvas
@@ -30,11 +31,18 @@ assignment: CanvasAssignment = course.get_assignment(ASSIGNMENT_ID)
 
 # print(repr(assignment))
 # print(assignment.description)
-print(assignment.id)
-print(assignment.peer_reviews)
-print(assignment.rubric_settings)
+# print(assignment.id)
+# print(assignment.peer_reviews)
+# print(assignment.rubric_settings)
 
-peerReviews = assignment.get_peer_reviews(include='submission_comments')
+notPeerReviews = assignment.get_peer_reviews(include=['submission_comments', 'user'], per_page=100)
 
 # review comments are from instructor/TA, NOT the reviewer
-print(repr(peerReviews[0]))
+print(repr(list(notPeerReviews)))
+
+# https://canvas-test.it.umich.edu/api/v1/courses/545451/rubrics/120238?include[]=peer_assessments&style=full
+# peerReviews = course.get_rubric(120238, include='peer_assessments',
+#                                 style='full')
+# print(repr(peerReviews))
+# print(repr(peerReviews.assessments))
+# json.dump(peerReviews.assessments, open('assessments.json', 'w'), indent=2)
