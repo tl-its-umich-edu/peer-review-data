@@ -1,48 +1,25 @@
 # -*- coding: utf-8 -*-
 import json
-import os
+import sys
 
-from canvasapi import Canvas
-from canvasapi.assignment import Assignment
+from canvasData import *
 
-CANVAS_API_URL: str = os.getenv('CANVAS_API_URL',
-                                'https://canvas-test.it.umich.edu/')
-CANVAS_API_TOKEN: str = os.getenv('CANVAS_API_TOKEN')
-COURSE_ID: str = os.getenv('COURSE_ID')
-ASSIGNMENT_ID: str = os.getenv('ASSIGNMENT_ID')
+course: CanvasCourse = canvas.get_course(COURSE_ID)
+print(f'Found course ({course.id}): "{course.name}"')
 
-if CANVAS_API_TOKEN is None:
-    raise RuntimeError('"CANVAS_API_TOKEN" was not set.')
-
-canvas = Canvas(CANVAS_API_URL, CANVAS_API_TOKEN)
-
-
-class CanvasAssignment(Assignment):
-    id: int
-    description: str
-    peer_reviews: bool
-    automatic_peer_reviews: bool
-    anonymous_peer_reviews: bool
-    rubric_settings: dict
-
-
-course = canvas.get_course(COURSE_ID)
 assignment: CanvasAssignment = course.get_assignment(ASSIGNMENT_ID)
+print(f'Found assignment ({assignment.id}): "{assignment.name}"')
 
-# print(repr(assignment))
-# print(assignment.description)
-# print(assignment.id)
-# print(assignment.peer_reviews)
-# print(assignment.rubric_settings)
+if assignment.peer_reviews is not True:
+    print(f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
+          'Not configured for peer reviews.')
+    sys.exit()
 
-notPeerReviews = assignment.get_peer_reviews(include=['submission_comments', 'user'], per_page=100)
+print(f'Assignment ({assignment.id}) is peer reviewed')
 
-# review comments are from instructor/TA, NOT the reviewer
-print(repr(list(notPeerReviews)))
+rubricId = assignment.rubric_settings.get('id')
 
-# https://canvas-test.it.umich.edu/api/v1/courses/545451/rubrics/120238?include[]=peer_assessments&style=full
-# peerReviews = course.get_rubric(120238, include='peer_assessments',
-#                                 style='full')
-# print(repr(peerReviews))
-# print(repr(peerReviews.assessments))
-# json.dump(peerReviews.assessments, open('assessments.json', 'w'), indent=2)
+assessmentsRubric: CanvasRubric = course.get_rubric(
+    rubricId, include='peer_assessments', style='full')
+json.dump(assessmentsRubric.assessments, open('assessments.json', 'w'),
+          indent=2)
