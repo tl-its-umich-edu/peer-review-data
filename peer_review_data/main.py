@@ -21,5 +21,5 @@ rubricId = assignment.rubric_settings.get('id')
 
 assessmentsRubric: CanvasRubric = course.get_rubric(
     rubricId, include='peer_assessments', style='full')
-json.dump(assessmentsRubric.assessments, open('assessments.json', 'w'),
+json.dump(assessmentsRubric.assessments, open('../assessments.json', 'w'),
           indent=2)
