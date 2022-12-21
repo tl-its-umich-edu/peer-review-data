@@ -74,7 +74,7 @@ LOGGING: dict[str, Any] = {
 }
 
 INSTALLED_APPS: list[str] = [
-    'peer-review-data'
+    'peer_review_data'
 ]
 
 SECRET_KEY: str = os.getenv('SECRET_KEY', '-- A SECRET KEY --')
@@ -87,5 +87,5 @@ SECRET_KEY: str = os.getenv('SECRET_KEY', '-- A SECRET KEY --')
 #     }
 # ]
 
-TIME_ZONE: str = os.getenv('TIME_ZONE', 'America/Detroit')
+TIME_ZONE: str = os.getenv('TIME_ZONE', 'UTC')
 USE_TZ: bool = True
