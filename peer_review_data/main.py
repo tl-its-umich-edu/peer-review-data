@@ -1,25 +1,44 @@
 # -*- coding: utf-8 -*-
 import json
-import sys
+from datetime import datetime, timedelta
+
+from django.utils.timezone import utc
 
 from canvasData import *
 
-course: CanvasCourse = canvas.get_course(COURSE_ID)
-print(f'Found course ({course.id}): "{course.name}"')
+LOGGER: Logger = getLogger(__name__)
 
-assignment: CanvasAssignment = course.get_assignment(ASSIGNMENT_ID)
-print(f'Found assignment ({assignment.id}): "{assignment.name}"')
 
-if assignment.peer_reviews is not True:
-    print(f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
-          'Not configured for peer reviews.')
-    sys.exit()
+def main() -> None:
+    timeStart: datetime = datetime.now(tz=utc)
+    LOGGER.info(f'Start time: {timeStart.isoformat(timespec="milliseconds")}')
 
-print(f'Assignment ({assignment.id}) is peer reviewed')
+    course: CanvasCourse = canvas.get_course(COURSE_ID)
+    LOGGER.info(f'Found course ({course.id}): "{course.name}"')
 
-rubricId = assignment.rubric_settings.get('id')
+    assignment: CanvasAssignment = course.get_assignment(ASSIGNMENT_ID)
+    LOGGER.info(f'Found assignment ({assignment.id}): "{assignment.name}"')
 
-assessmentsRubric: CanvasRubric = course.get_rubric(
-    rubricId, include='peer_assessments', style='full')
-json.dump(assessmentsRubric.assessments, open('../assessments.json', 'w'),
-          indent=2)
+    if assignment.peer_reviews is not True:
+        LOGGER.info(
+            f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
+            'Not configured for peer reviews.')
+        sys.exit()
+
+    LOGGER.info(f'Assignment ({assignment.id}) is peer reviewed')
+
+    rubricId: int = assignment.rubric_settings.get('id')
+
+    outputFileName: str = 'assessments.json'
+    assessmentsRubric: CanvasRubric = course.get_rubric(
+        rubricId, include=['assessments', 'account_associations'],
+        style='full')
+    json.dump(assessmentsRubric.assessments, open(outputFileName, 'w'),
+              indent=2)
+    LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
+
+    timeEnd: datetime = datetime.now(tz=utc)
+    timeElapsed: timedelta = timeEnd - timeStart
+
+    LOGGER.info(f'End time: {timeEnd.isoformat(timespec="milliseconds")}')
+    LOGGER.info(f'Elapsed time: {timeElapsed}')
