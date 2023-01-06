@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: on-failure
+    command: [ '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci' ]
+    environment:
+      - MYSQL_ROOT_PASSWORD=peer-review-data_root_pw
+      - MYSQL_HOST=peer-review-data_db
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=peer-review-data
+      - MYSQL_USER=peer-review-data
+      - MYSQL_PASSWORD=peer-review-data_pw
+    entrypoint: [ 'docker-entrypoint.sh', '--default-authentication-plugin=mysql_native_password' ]
+    ports:
+      - "5555:3306"
+    volumes:
+      - ./.data/mysql:/var/lib/mysql:delegated
+      - ./mysql:/docker-entrypoint-initdb.d:ro
+    container_name: peer-review-data_db
+  main:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    env_file:
+      - .env
+    container_name: peer-review-data_main
+    volumes:
+      - ./:/app
