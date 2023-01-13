@@ -27,15 +27,18 @@ def main() -> None:
 
     LOGGER.info(f'Assignment ({assignment.id}) is peer reviewed')
 
-    rubricId: int = assignment.rubric_settings.get('id')
+    assignmentRubricId: int = assignment.rubric_settings.get('id')
+    LOGGER.info(f'**** Assignment Rubric ID --> ({assignmentRubricId})')
 
     outputFileName: str = 'assessments.json'
-    assessmentsRubric: CanvasRubric = course.get_rubric(
-        rubricId, include=['assessments', 'account_associations'],
+    assignmentRubric: CanvasRubric = course.get_rubric(
+        assignmentRubricId, include=['assessments', 'account_associations'],
         style='full')
-    json.dump(assessmentsRubric.assessments, open(outputFileName, 'w'),
+    json.dump(assignmentRubric.assessments, open(outputFileName, 'w'),
               indent=2)
     LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
+
+    LOGGER.info(f'{assignmentRubric.assessments[0]}')
 
     timeEnd: datetime = datetime.now(tz=utc)
     timeElapsed: timedelta = timeEnd - timeStart
