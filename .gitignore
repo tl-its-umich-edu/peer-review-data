@@ -128,4 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .data
+
+# Local development files
 assessments.json
+rubric.json
