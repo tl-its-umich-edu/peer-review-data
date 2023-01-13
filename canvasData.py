@@ -2,6 +2,7 @@
 import os
 import sys
 from logging import Logger, getLogger
+from typing import List
 
 from canvasapi import Canvas
 from canvasapi.assignment import Assignment
@@ -48,5 +49,25 @@ class CanvasAssignment(Assignment):
     rubric_settings: dict
 
 
+class CanvasAssessmentComment(object):
+    pass
+
+
+class CanvasAssessment(object):
+    def __init__(self, assessment: dict):
+        self.__assessment = assessment
+
+    @property
+    def id(self) -> int:
+        return self.__assessment['id']
+
+    @property
+    def assessorId(self) -> int:
+        return self.__assessment['assessor_id']
+
+    data: List[dict]
+
+
 class CanvasRubric(Rubric):
-    assessments: dict
+    criteria: List[dict]
+    assessments: List[CanvasAssessment]
