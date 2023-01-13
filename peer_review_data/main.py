@@ -38,7 +38,17 @@ def main() -> None:
               indent=2)
     LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
 
-    LOGGER.info(f'{assignmentRubric.assessments[0]}')
+    '''
+    Shortcut: Get the assessment rubric ID from the first assessment in the
+    assignment rubric.  There may potentially be multiple assessment
+    rubrics, but the assignments seen thus far have not been set up that way.
+    This logic assumes all assessments use the same rubric and will request
+    that one from Canvas.  That will save time over requesting multiple of the
+    same rubric.  In the case of the test course, multiple means more than
+    1,000.
+    '''
+    assessmentRubricId = assignmentRubric.assessments[0]["rubric_association_id"]
+    LOGGER.info(f'**** Assessment Rubric ID --> ({assessmentRubricId})')
 
     timeEnd: datetime = datetime.now(tz=utc)
     timeElapsed: timedelta = timeEnd - timeStart
