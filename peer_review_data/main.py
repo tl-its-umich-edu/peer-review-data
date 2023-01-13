@@ -30,25 +30,21 @@ def main() -> None:
     assignmentRubricId: int = assignment.rubric_settings.get('id')
     LOGGER.info(f'**** Assignment Rubric ID --> ({assignmentRubricId})')
 
-    outputFileName: str = 'assessments.json'
+    outputFileName: str = 'rubric.json'
     assignmentRubric: CanvasRubric = course.get_rubric(
         assignmentRubricId, include=['assessments', 'account_associations'],
         style='full')
-    json.dump(assignmentRubric.assessments, open(outputFileName, 'w'),
+    json.dump({k: v for k, v in assignmentRubric.__dict__.items() if
+               k != '_requester'}, open(outputFileName, 'w'),
               indent=2)
     LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
 
-    '''
-    Shortcut: Get the assessment rubric ID from the first assessment in the
-    assignment rubric.  There may potentially be multiple assessment
-    rubrics, but the assignments seen thus far have not been set up that way.
-    This logic assumes all assessments use the same rubric and will request
-    that one from Canvas.  That will save time over requesting multiple of the
-    same rubric.  In the case of the test course, multiple means more than
-    1,000.
-    '''
-    assessmentRubricId = assignmentRubric.assessments[0]["rubric_association_id"]
-    LOGGER.info(f'**** Assessment Rubric ID --> ({assessmentRubricId})')
+    LOGGER.info(json.dumps(assignmentRubric.criteria, indent=2))
+
+    assessment: CanvasAssessment = CanvasAssessment(
+        assignmentRubric.assessments[0])
+    LOGGER.info(
+        f'**** Assessment 0 --> ID: ({assessment.id}), assessor ID: ({assessment.assessorId})')
 
     timeEnd: datetime = datetime.now(tz=utc)
     timeElapsed: timedelta = timeEnd - timeStart
