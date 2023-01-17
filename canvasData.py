@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
 import os
 import sys
 from logging import Logger, getLogger
@@ -84,7 +83,7 @@ class CanvasCriteria(object):
         return self.__criteria['long_description']
 
 
-class CanvasRubric(object):
+class CanvasRubric(Rubric):
     __criteria: List[CanvasCriteria] = None
 
     def __init__(self, rubric: dict):
@@ -98,9 +97,3 @@ class CanvasRubric(object):
                                d.get('criteria', d.get('data'))]
 
     assessments: List[CanvasAssessment]
-
-    def toJSON(self) -> str:
-        # return json.dumps(self, default=lambda o: o.__dict__,
-        return json.dumps(self, default=vars,
-                          sort_keys=True, indent=4)
-

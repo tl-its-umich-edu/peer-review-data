@@ -31,23 +31,31 @@ def main() -> None:
     LOGGER.info(f'**** Assignment Rubric ID --> ({assignmentRubricId})')
 
     outputFileName: str = 'rubric.json'
-    assignmentRubric: CanvasRubric = CanvasRubric(course.get_rubric(
+    assignmentRubric: CanvasRubric = course.get_rubric(
         assignmentRubricId,
-        # include=['assessments', 'account_associations'],
-        # style='full'
-    ))
+        # include=['assessments', 'account_associations'], style='full'
+    )
 
     # json.dump(assignmentRubric, open(outputFileName, 'w'),
     #           indent=2, skipkeys=True)
 
-    LOGGER.info(f'**** toJSON --> {assignmentRubric.toJSON()}')
-
-    # json.dump({k: v for k, v in assignmentRubric.__dict__.items() if
-    #            k != '_requester'}, open(outputFileName, 'w'),
-    #           indent=2, skipkeys=True)
+    json.dump({k: v for k, v in assignmentRubric.__dict__.items() if
+               k != '_requester'}, open(outputFileName, 'w'),
+              indent=2, skipkeys=True)
     LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
 
-    LOGGER.info(json.dumps(assignmentRubric.criteria, indent=2))
+    '''
+    Rubric objects always contain criteria in the `data` property, and also
+    in the `criteria` property when assessments are requested.  Use `data`
+    to ensure access to the criteria.
+    '''
+    LOGGER.info(json.dumps(assignmentRubric.data, indent=2))
+
+    if not hasattr(assignmentRubric, 'assessments'):
+        LOGGER.info(
+            f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
+            'No peer reviews ("assessments") were found.')
+        sys.exit()
 
     assessment: CanvasAssessment = CanvasAssessment(
         assignmentRubric.assessments[0])
