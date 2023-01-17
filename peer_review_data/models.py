@@ -24,3 +24,7 @@ class Rubric(models.Model):
 
 class Submission(models.Model):
     id = models.AutoField(primary_key=True, verbose_name='Submission ID')
+
+class Criteria(models.Model):
+    id = models.AutoField(primary_key=True, verbose_name='Criteria ID')
+    rubricId = models.ForeignKey(Rubric, on_delete=models.DO_NOTHING)

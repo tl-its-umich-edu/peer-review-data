@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import os
 import sys
 from logging import Logger, getLogger
@@ -8,6 +9,8 @@ from canvasapi import Canvas
 from canvasapi.assignment import Assignment
 from canvasapi.course import Course
 from canvasapi.rubric import Rubric
+
+# from canvasapi.canvas_object import CanvasObject
 
 LOGGER: Logger = getLogger(__name__)
 
@@ -68,6 +71,36 @@ class CanvasAssessment(object):
     data: List[dict]
 
 
-class CanvasRubric(Rubric):
-    criteria: List[dict]
+class CanvasCriteria(object):
+    def __init__(self, criteria: dict):
+        self.__criteria = criteria
+
+    @property
+    def description(self) -> str:
+        return self.__criteria['description']
+
+    @property
+    def longDescription(self) -> str:
+        return self.__criteria['long_description']
+
+
+class CanvasRubric(object):
+    __criteria: List[CanvasCriteria] = None
+
+    def __init__(self, rubric: dict):
+        self.__rubric = rubric
+
+    @property
+    def criteria(self) -> List[CanvasCriteria]:
+        if self.__criteria is None:
+            d = self.__dict__
+            self.__criteria = [CanvasCriteria(c) for c in
+                               d.get('criteria', d.get('data'))]
+
     assessments: List[CanvasAssessment]
+
+    def toJSON(self) -> str:
+        # return json.dumps(self, default=lambda o: o.__dict__,
+        return json.dumps(self, default=vars,
+                          sort_keys=True, indent=4)
+

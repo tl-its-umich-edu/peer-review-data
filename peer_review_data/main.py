@@ -31,12 +31,20 @@ def main() -> None:
     LOGGER.info(f'**** Assignment Rubric ID --> ({assignmentRubricId})')
 
     outputFileName: str = 'rubric.json'
-    assignmentRubric: CanvasRubric = course.get_rubric(
-        assignmentRubricId, include=['assessments', 'account_associations'],
-        style='full')
-    json.dump({k: v for k, v in assignmentRubric.__dict__.items() if
-               k != '_requester'}, open(outputFileName, 'w'),
-              indent=2)
+    assignmentRubric: CanvasRubric = CanvasRubric(course.get_rubric(
+        assignmentRubricId,
+        # include=['assessments', 'account_associations'],
+        # style='full'
+    ))
+
+    # json.dump(assignmentRubric, open(outputFileName, 'w'),
+    #           indent=2, skipkeys=True)
+
+    LOGGER.info(f'**** toJSON --> {assignmentRubric.toJSON()}')
+
+    # json.dump({k: v for k, v in assignmentRubric.__dict__.items() if
+    #            k != '_requester'}, open(outputFileName, 'w'),
+    #           indent=2, skipkeys=True)
     LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
 
     LOGGER.info(json.dumps(assignmentRubric.criteria, indent=2))
