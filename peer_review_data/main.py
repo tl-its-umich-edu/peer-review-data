@@ -21,6 +21,7 @@ def saveCourseAndUsers(course: CanvasCourse) -> bool:
         u.save()
     return True
 
+
 def main() -> None:
     timeStart: datetime = datetime.now(tz=utc)
     LOGGER.info(f'Start time: {timeStart.isoformat(timespec="milliseconds")}')
@@ -32,7 +33,6 @@ def main() -> None:
     # LOGGER.info({k: v for k, v in course.__dict__.items() if k != '_requester'})
     # sys.exit()
 
-
     assignment: CanvasAssignment = course.get_assignment(ASSIGNMENT_ID)
     LOGGER.info(f'Found assignment ({assignment.id}): "{assignment.name}"')
 
@@ -43,17 +43,42 @@ def main() -> None:
         sys.exit()
 
     LOGGER.info(f'Assignment ({assignment.id}) is peer reviewed')
-    if not courseSaved:
-        courseSaved = saveCourseAndUsers(course)
 
     assignmentRubricId: int = assignment.rubric_settings.get('id')
-    LOGGER.info(f'**** Assignment Rubric ID --> ({assignmentRubricId})')
+    LOGGER.info(
+        f'Assignment ({assignment.id}) has rubric ID ({assignmentRubricId})')
 
     outputFileName: str = 'rubric.json'
     assignmentRubric: CanvasRubric = course.get_rubric(
         assignmentRubricId,
-        # include=['assessments', 'account_associations'], style='full'
+        include=['assessments', 'account_associations'], style='full'
     )
+
+    if not hasattr(assignmentRubric, 'assessments'):
+        LOGGER.info(
+            f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
+            'No peer reviews ("assessments") were found.')
+        sys.exit()
+
+    LOGGER.info(f'assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}) has '
+                'peer reviews ("assessments")…')
+
+    if not courseSaved:
+        pass
+        # courseSaved = saveCourseAndUsers(course)
+
+    a = models.Assignment.fromCanvasAssignment(assignment)
+    LOGGER.info(f'Saving {a}…')
+    a.save()
+
+
+    LOGGER.info(json.dumps(
+        {k: v for k, v in assignment.__dict__.items() if k != '_requester'},
+        default=str
+    ))
+    sys.exit()
+
+    # saveAssignment(assignment)
 
     # json.dump(assignmentRubric, open(outputFileName, 'w'),
     #           indent=2, skipkeys=True)

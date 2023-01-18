@@ -45,6 +45,17 @@ class User(models.Model):
 
 class Assignment(models.Model):
     id = models.IntegerField(primary_key=True)
+    name = models.TextField()
+    course_id = models.ForeignKey(Course, related_name='id',
+                                  on_delete=models.CASCADE)
+
+    @classmethod
+    def fromCanvasAssignment(cls, assignment: CanvasAssignment) -> User:
+        return cls(**dictOnlyKeys(assignment.__dict__,
+                                  ['id', 'name', 'course_id']))
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} ({self.id}): "{self.name}"'
 
 
 class Rubric(models.Model):

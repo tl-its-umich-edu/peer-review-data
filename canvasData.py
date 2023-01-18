@@ -52,7 +52,7 @@ class CanvasCourse(Course):
 class CanvasAssignment(Assignment):
     id: int
     name: str
-    description: str
+    course_id: int
     peer_reviews: bool
     rubric_settings: dict
 
