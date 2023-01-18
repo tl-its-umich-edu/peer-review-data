@@ -5,9 +5,21 @@ from datetime import datetime, timedelta
 from django.utils.timezone import utc
 
 from canvasData import *
+from peer_review_data import models
 
 LOGGER: Logger = getLogger(__name__)
 
+
+def saveCourseAndUsers(course: CanvasCourse) -> bool:
+    c = models.Course.fromCanvasCourse(course)
+    LOGGER.info(f'Saving {c}…')
+    c.save()
+
+    for user in course.get_users():
+        u = models.User.fromCanvasUser(user)
+        LOGGER.info(f'Saving {u}…')
+        u.save()
+    return True
 
 def main() -> None:
     timeStart: datetime = datetime.now(tz=utc)
@@ -15,6 +27,11 @@ def main() -> None:
 
     course: CanvasCourse = canvas.get_course(COURSE_ID)
     LOGGER.info(f'Found course ({course.id}): "{course.name}"')
+    courseSaved = False
+
+    # LOGGER.info({k: v for k, v in course.__dict__.items() if k != '_requester'})
+    # sys.exit()
+
 
     assignment: CanvasAssignment = course.get_assignment(ASSIGNMENT_ID)
     LOGGER.info(f'Found assignment ({assignment.id}): "{assignment.name}"')
@@ -26,6 +43,8 @@ def main() -> None:
         sys.exit()
 
     LOGGER.info(f'Assignment ({assignment.id}) is peer reviewed')
+    if not courseSaved:
+        courseSaved = saveCourseAndUsers(course)
 
     assignmentRubricId: int = assignment.rubric_settings.get('id')
     LOGGER.info(f'**** Assignment Rubric ID --> ({assignmentRubricId})')

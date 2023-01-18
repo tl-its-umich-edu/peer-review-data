@@ -8,6 +8,7 @@ from canvasapi import Canvas
 from canvasapi.assignment import Assignment
 from canvasapi.course import Course
 from canvasapi.rubric import Rubric
+from canvasapi.user import User
 
 # from canvasapi.canvas_object import CanvasObject
 
@@ -37,6 +38,11 @@ if len(envErrors) > 0:
 
 canvas = Canvas(CANVAS_API_URL, CANVAS_API_TOKEN)
 
+class CanvasUser(User):
+    id: int
+    name: str
+    sortable_name: str
+    login_id: str
 
 class CanvasCourse(Course):
     id: int
