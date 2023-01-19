@@ -6,6 +6,7 @@ from django.utils.timezone import utc
 
 from canvasData import *
 from peer_review_data import models
+from utils import dictSkipKeys
 
 LOGGER: Logger = getLogger(__name__)
 
@@ -24,8 +25,10 @@ def saveCourseAndUsers(canvasCourse: CanvasCourse) -> (bool, Course):
     return True, course
 
 
-def saveRubricAndCriteria(canvasRubric: CanvasRubric):
-    rubric = models.Rubric.fromCanvasRubric(canvasRubric)
+def saveRubricAndCriteria(canvasRubric: CanvasRubric,
+                          canvasAssignment: CanvasAssignment):
+    rubric = models.Rubric.fromCanvasRubricAndAssignment(canvasRubric,
+                                                         canvasAssignment)
     LOGGER.info(f'Saving {rubric}…')
     rubric.save()
 
@@ -62,9 +65,7 @@ def main() -> None:
 
     outputFileName: str = 'rubric.json'
     canvasAssignmentRubric: CanvasRubric = canvasCourse.get_rubric(
-        assignmentRubricId,
-        include=['assessments', 'account_associations'], style='full'
-    )
+        assignmentRubricId, include='assessments', style='full')
 
     if not hasattr(canvasAssignmentRubric, 'assessments'):
         LOGGER.info(f'Skipping assignment ({ASSIGNMENT_ID}) in '
@@ -91,8 +92,8 @@ def main() -> None:
     # json.dump(assignmentRubric, open(outputFileName, 'w'),
     #           indent=2, skipkeys=True)
 
-    json.dump({k: v for k, v in canvasAssignmentRubric.__dict__.items() if
-               k != '_requester'}, open(outputFileName, 'w'),
+    json.dump(dictSkipKeys(canvasAssignmentRubric, '_requester'),
+              open(outputFileName, 'w'),
               indent=2, skipkeys=True)
     LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
 
@@ -109,7 +110,7 @@ def main() -> None:
     '''
     LOGGER.info(json.dumps(canvasAssignmentRubric.data, indent=2))
 
-    saveRubricAndCriteria(canvasAssignmentRubric)
+    saveRubricAndCriteria(canvasAssignmentRubric, canvasAssignment)
 
     assessment: CanvasAssessment = CanvasAssessment(
         canvasAssignmentRubric.assessments[0])
