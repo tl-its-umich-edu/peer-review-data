@@ -10,99 +10,109 @@ from peer_review_data import models
 LOGGER: Logger = getLogger(__name__)
 
 
-def saveCourseAndUsers(course: CanvasCourse) -> bool:
-    c = models.Course.fromCanvasCourse(course)
-    LOGGER.info(f'Saving {c}…')
-    c.save()
+def saveCourseAndUsers(canvasCourse: CanvasCourse) -> (bool, Course):
+    course = models.Course.fromCanvasCourse(canvasCourse)
+    LOGGER.info(f'Saving {course}…')
+    course.save()
 
-    for user in course.get_users():
-        u = models.User.fromCanvasUser(user)
-        LOGGER.info(f'Saving {u}…')
-        u.save()
-    return True
+    # DEBUG - uncomment for finished product
+    # for canvasUser in canvasCourse.get_users():
+    #     user = models.User.fromCanvasUser(canvasUser)
+    #     LOGGER.info(f'Saving {user}…')
+    #     user.save()
+
+    return True, course
+
+
+def saveRubricAndCriteria(canvasRubric: CanvasRubric):
+    rubric = models.Rubric.fromCanvasRubric(canvasRubric)
+    LOGGER.info(f'Saving {rubric}…')
+    rubric.save()
 
 
 def main() -> None:
     timeStart: datetime = datetime.now(tz=utc)
     LOGGER.info(f'Start time: {timeStart.isoformat(timespec="milliseconds")}')
 
-    course: CanvasCourse = canvas.get_course(COURSE_ID)
-    LOGGER.info(f'Found course ({course.id}): "{course.name}"')
+    canvasCourse: CanvasCourse = canvas.get_course(COURSE_ID)
+    LOGGER.info(f'Found course ({canvasCourse.id}): "{canvasCourse.name}"')
     courseSaved = False
+    course: models.Course = None
+    user: models.User = None
 
-    # LOGGER.info({k: v for k, v in course.__dict__.items() if k != '_requester'})
+    # LOGGER.info({k: v for k, v in canvasCourse.__dict__.items() if k != '_requester'})
     # sys.exit()
 
-    assignment: CanvasAssignment = course.get_assignment(ASSIGNMENT_ID)
-    LOGGER.info(f'Found assignment ({assignment.id}): "{assignment.name}"')
+    canvasAssignment: CanvasAssignment = canvasCourse.get_assignment(
+        ASSIGNMENT_ID)
+    LOGGER.info(
+        f'Found assignment ({canvasAssignment.id}): "{canvasAssignment.name}"')
 
-    if assignment.peer_reviews is not True:
+    if canvasAssignment.peer_reviews is not True:
         LOGGER.info(
             f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
             'Not configured for peer reviews.')
         sys.exit()
 
-    LOGGER.info(f'Assignment ({assignment.id}) is peer reviewed')
+    LOGGER.info(f'Assignment ({canvasAssignment.id}) is peer reviewed')
 
-    assignmentRubricId: int = assignment.rubric_settings.get('id')
-    LOGGER.info(
-        f'Assignment ({assignment.id}) has rubric ID ({assignmentRubricId})')
+    assignmentRubricId: int = canvasAssignment.rubric_settings.get('id')
+    LOGGER.info(f'Assignment ({canvasAssignment.id}) has '
+                f'rubric ID ({assignmentRubricId})')
 
     outputFileName: str = 'rubric.json'
-    assignmentRubric: CanvasRubric = course.get_rubric(
+    canvasAssignmentRubric: CanvasRubric = canvasCourse.get_rubric(
         assignmentRubricId,
         include=['assessments', 'account_associations'], style='full'
     )
 
-    if not hasattr(assignmentRubric, 'assessments'):
-        LOGGER.info(
-            f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
-            'No peer reviews ("assessments") were found.')
+    if not hasattr(canvasAssignmentRubric, 'assessments'):
+        LOGGER.info(f'Skipping assignment ({ASSIGNMENT_ID}) in '
+                    f'course ({COURSE_ID}): No peer reviews '
+                    '("assessments") found.')
         sys.exit()
 
-    LOGGER.info(f'assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}) has '
+    LOGGER.info(f'Assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}) has '
                 'peer reviews ("assessments")…')
 
     if not courseSaved:
-        pass
-        # courseSaved = saveCourseAndUsers(course)
+        courseSaved, course = saveCourseAndUsers(canvasCourse)
 
-    a = models.Assignment.fromCanvasAssignment(assignment)
-    LOGGER.info(f'Saving {a}…')
-    a.save()
+    assignment: models.Assignment = models.Assignment.fromCanvasAssignment(
+        canvasAssignment)
+    LOGGER.info(f'Saving {assignment}…')
+    assignment.save()
 
-
-    LOGGER.info(json.dumps(
-        {k: v for k, v in assignment.__dict__.items() if k != '_requester'},
-        default=str
-    ))
-    sys.exit()
-
-    # saveAssignment(assignment)
+    # LOGGER.info(json.dumps(
+    #     {k: v for k, v in canvasAssignment.__dict__.items() if k != '_requester'},
+    #     default=str
+    # ))
 
     # json.dump(assignmentRubric, open(outputFileName, 'w'),
     #           indent=2, skipkeys=True)
 
-    json.dump({k: v for k, v in assignmentRubric.__dict__.items() if
+    json.dump({k: v for k, v in canvasAssignmentRubric.__dict__.items() if
                k != '_requester'}, open(outputFileName, 'w'),
               indent=2, skipkeys=True)
     LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
+
+    if not hasattr(canvasAssignmentRubric, 'assessments'):
+        LOGGER.info(
+            f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
+            'No peer reviews ("assessments") were found.')
+        sys.exit()
 
     '''
     Rubric objects always contain criteria in the `data` property, and also
     in the `criteria` property when assessments are requested.  Use `data`
     to ensure access to the criteria.
     '''
-    LOGGER.info(json.dumps(assignmentRubric.data, indent=2))
+    LOGGER.info(json.dumps(canvasAssignmentRubric.data, indent=2))
 
-    if not hasattr(assignmentRubric, 'assessments'):
-        LOGGER.info(
-            f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
-            'No peer reviews ("assessments") were found.')
-        sys.exit()
+    saveRubricAndCriteria(canvasAssignmentRubric)
 
     assessment: CanvasAssessment = CanvasAssessment(
-        assignmentRubric.assessments[0])
+        canvasAssignmentRubric.assessments[0])
     LOGGER.info(
         f'**** Assessment 0 --> ID: ({assessment.id}), assessor ID: ({assessment.assessorId})')
 

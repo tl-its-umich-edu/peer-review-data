@@ -25,7 +25,7 @@ class Course(models.Model):
                                   ['id', 'name', 'course_code']))
 
     def __str__(self) -> str:
-        return f'Course ({self.id}): "{self.course_code}"'
+        return f'{self.__class__.__name__} ({self.id}): "{self.course_code}"'
 
 
 class User(models.Model):
@@ -40,14 +40,13 @@ class User(models.Model):
                                   ['id', 'name', 'sortable_name', 'login_id']))
 
     def __str__(self) -> str:
-        return f'User ({self.id}): "{self.login_id}"'
+        return f'{self.__class__.__name__} ({self.id}): "{self.login_id}"'
 
 
 class Assignment(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.TextField()
-    course_id = models.ForeignKey(Course, related_name='id',
-                                  on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
 
     @classmethod
     def fromCanvasAssignment(cls, assignment: CanvasAssignment) -> User:
@@ -60,12 +59,25 @@ class Assignment(models.Model):
 
 class Rubric(models.Model):
     id = models.IntegerField(primary_key=True)
+    title = models.TextField()
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
+
+    @classmethod
+    def fromCanvasRubric(cls, rubric: CanvasRubric) -> Rubric:
+        return cls(**dictOnlyKeys(rubric.__dict__,
+                                  ['id', 'title', 'course_id']))
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} ({self.id}): "{self.title}" ' \
+               f'({self.course})'
 
 
 class Submission(models.Model):
     id = models.AutoField(primary_key=True)
 
 
-class Criteria(models.Model):
+class Criterion(models.Model):
     id = models.AutoField(primary_key=True)
-    rubricId = models.ForeignKey(Rubric, on_delete=models.DO_NOTHING)
+    rubric = models.ForeignKey(Rubric, on_delete=models.CASCADE,
+                               related_name='criteria')
