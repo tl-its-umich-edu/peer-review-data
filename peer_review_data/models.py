@@ -5,7 +5,7 @@ import logging
 from django.db import models
 
 from canvasData import *
-from utils import dictOnlyKeys
+from utils import dictKeepKeys
 
 LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class Course(models.Model):
 
     @classmethod
     def fromCanvasCourse(cls, course: CanvasCourse) -> User:
-        return cls(**dictOnlyKeys(course, ['id', 'name', 'course_code']))
+        return cls(**dictKeepKeys(course, ['id', 'name', 'course_code']))
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): "{self.course_code}"'
@@ -36,7 +36,7 @@ class User(models.Model):
     @classmethod
     def fromCanvasUser(cls, user: CanvasUser) -> User:
         return cls(
-            **dictOnlyKeys(user, ['id', 'name', 'sortable_name', 'login_id']))
+            **dictKeepKeys(user, ['id', 'name', 'sortable_name', 'login_id']))
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): "{self.login_id}"'
@@ -49,7 +49,7 @@ class Assignment(models.Model):
 
     @classmethod
     def fromCanvasAssignment(cls, assignment: CanvasAssignment) -> User:
-        return cls(**dictOnlyKeys(assignment, ['id', 'name', 'course_id']))
+        return cls(**dictKeepKeys(assignment, ['id', 'name', 'course_id']))
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): "{self.name}"'
@@ -65,7 +65,7 @@ class Rubric(models.Model):
     def fromCanvasRubricAndAssignment(cls, rubric: CanvasRubric,
                                       assignment: CanvasAssignment) -> Rubric:
         return cls(
-            **dictOnlyKeys(rubric, ['id', 'title', 'course_id']),
+            **dictKeepKeys(rubric, ['id', 'title', 'course_id']),
             assignment_id=assignment.id)
 
     def __str__(self) -> str:
