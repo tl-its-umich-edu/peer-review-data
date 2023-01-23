@@ -63,12 +63,12 @@ LOGGING: dict[str, Any] = {
     },
     'root': {
         'handlers': ['console'],
-        'level': os.getenv('LOG_LEVEL', 'INFO')
+        'level': os.getenv('LOG_LEVEL', 'INFO').upper()
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': os.getenv('LOG_LEVEL', 'INFO'),
+            'level': os.getenv('LOG_LEVEL', 'INFO').upper(),
             'propagate': False
         }
     }
