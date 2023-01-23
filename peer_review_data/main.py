@@ -85,7 +85,7 @@ def main() -> None:
     assignment.save()
 
     # LOGGER.info(json.dumps(
-    #     {k: v for k, v in canvasAssignment.__dict__.items() if k != '_requester'},
+    #     dictSkipKeys(canvasAssignment, ['_requester']),
     #     default=str
     # ))
 
@@ -112,10 +112,11 @@ def main() -> None:
 
     saveRubricAndCriteria(canvasAssignmentRubric, canvasAssignment)
 
+    # FIXME: Debugging with first assessment only.  Expand to all assessments.
     assessment: CanvasAssessment = CanvasAssessment(
         canvasAssignmentRubric.assessments[0])
-    LOGGER.info(
-        f'**** Assessment 0 --> ID: ({assessment.id}), assessor ID: ({assessment.assessorId})')
+    LOGGER.info(f'**** Assessment 0 --> ID: ({assessment.id}), '
+                f'assessor ID: ({assessment.assessorId})')
 
     timeEnd: datetime = datetime.now(tz=utc)
     timeElapsed: timedelta = timeEnd - timeStart
