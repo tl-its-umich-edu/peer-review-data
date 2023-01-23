@@ -1,7 +1,7 @@
-from typing import List, Union
+from typing import List
 
 
-def dictSkipKeys(d: Union[dict, object], keysToSkip: List[str]) -> dict:
+def dictSkipKeys(d: dict | object, keysToSkip: List[str]) -> dict:
     try:
         d = d.__dict__
     except:
@@ -9,7 +9,7 @@ def dictSkipKeys(d: Union[dict, object], keysToSkip: List[str]) -> dict:
     return {k: v for k, v in d.items() if k not in keysToSkip}
 
 
-def dictOnlyKeys(d: Union[dict, object], keysToKeep: List[str]) -> dict:
+def dictOnlyKeys(d: dict | object, keysToKeep: List[str]) -> dict:
     try:
         d = d.__dict__
     except:
