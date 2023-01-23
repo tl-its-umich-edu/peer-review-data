@@ -1,4 +1,4 @@
-# standard libaries
+# standard libraries
 import logging
 
 # third-party libraries
@@ -20,7 +20,7 @@ class Course(models.Model):
     course_code = models.TextField()
 
     @classmethod
-    def fromCanvasCourse(cls, course: CanvasCourse) -> User:
+    def fromCanvasCourse(cls, course: CanvasCourse) -> Course:
         return cls(**dictKeepKeys(course, ['id', 'name', 'course_code']))
 
     def __str__(self) -> str:
@@ -48,7 +48,7 @@ class Assignment(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
 
     @classmethod
-    def fromCanvasAssignment(cls, assignment: CanvasAssignment) -> User:
+    def fromCanvasAssignment(cls, assignment: CanvasAssignment) -> Assignment:
         return cls(**dictKeepKeys(assignment, ['id', 'name', 'course_id']))
 
     def __str__(self) -> str:
