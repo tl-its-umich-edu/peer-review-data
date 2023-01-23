@@ -38,11 +38,13 @@ if len(envErrors) > 0:
 
 canvas = Canvas(CANVAS_API_URL, CANVAS_API_TOKEN)
 
+
 class CanvasUser(User):
     id: int
     name: str
     sortable_name: str
     login_id: str
+
 
 class CanvasCourse(Course):
     id: int
