@@ -93,6 +93,7 @@ class CanvasCriteria(object):
 
 class CanvasRubric(Rubric):
     __criteria: List[CanvasCriteria] = None
+    data: List[dict]
 
     def __init__(self, rubric: dict):
         self.__rubric = rubric

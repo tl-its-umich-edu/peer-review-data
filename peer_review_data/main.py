@@ -16,7 +16,7 @@ def saveCourseAndUsers(canvasCourse: CanvasCourse) -> (bool, Course):
     LOGGER.info(f'Saving {course}…')
     course.save()
 
-    # DEBUG - uncomment for finished product
+    # FIXME: DEBUG - uncomment for finished product
     # for canvasUser in canvasCourse.get_users():
     #     user = models.User.fromCanvasUser(canvasUser)
     #     LOGGER.info(f'Saving {user}…')
@@ -32,6 +32,10 @@ def saveRubricAndCriteria(canvasRubric: CanvasRubric,
     LOGGER.info(f'Saving {rubric}…')
     rubric.save()
 
+    # Get criteria from canvasRubric.data
+    for criterion in canvasRubric.data:
+        pass
+    # TODO: Continue…
 
 def main() -> None:
     timeStart: datetime = datetime.now(tz=utc)
@@ -84,10 +88,8 @@ def main() -> None:
     LOGGER.info(f'Saving {assignment}…')
     assignment.save()
 
-    # LOGGER.info(json.dumps(
-    #     dictSkipKeys(canvasAssignment, ['_requester']),
-    #     default=str
-    # ))
+    # LOGGER.info(json.dumps(dictSkipKeys(canvasAssignment, ['_requester']),
+    #                        default=str))
 
     # json.dump(assignmentRubric, open(outputFileName, 'w'),
     #           indent=2, skipkeys=True)
@@ -108,6 +110,7 @@ def main() -> None:
     in the `criteria` property when assessments are requested.  Use `data`
     to ensure access to the criteria.
     '''
+    LOGGER.info(f'Rubric criteria from `canvasAssignmentRubric.data`…')
     LOGGER.info(json.dumps(canvasAssignmentRubric.data, indent=2))
 
     saveRubricAndCriteria(canvasAssignmentRubric, canvasAssignment)

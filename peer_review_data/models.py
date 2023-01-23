@@ -81,3 +81,9 @@ class Criterion(models.Model):
     id = models.AutoField(primary_key=True)
     rubric = models.ForeignKey(Rubric, on_delete=models.CASCADE,
                                related_name='criteria')
+
+    @classmethod
+    def fromCanvasCriterion(cls, criterion: dict) -> Criterion:
+        return cls(
+            **dictKeepKeys(criterion, ['id', 'title', 'course_id']))
+        # TODO: Continue…
