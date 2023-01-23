@@ -103,5 +103,6 @@ class CanvasRubric(Rubric):
             d = self.__dict__
             self.__criteria = [CanvasCriteria(c) for c in
                                d.get('criteria', d.get('data'))]
+        return self.__criteria
 
     assessments: List[CanvasAssessment]

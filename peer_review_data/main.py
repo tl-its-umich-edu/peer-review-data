@@ -40,10 +40,10 @@ def main() -> None:
     canvasCourse: CanvasCourse = canvas.get_course(COURSE_ID)
     LOGGER.info(f'Found course ({canvasCourse.id}): "{canvasCourse.name}"')
     courseSaved = False
-    course: models.Course = None
-    user: models.User = None
+    course: models.Course | None = None
+    user: models.User | None = None
 
-    # LOGGER.info({k: v for k, v in canvasCourse.__dict__.items() if k != '_requester'})
+    # LOGGER.info(dictSkipKeys(canvasCourse, ['_requester']))
     # sys.exit()
 
     canvasAssignment: CanvasAssignment = canvasCourse.get_assignment(
@@ -92,7 +92,7 @@ def main() -> None:
     # json.dump(assignmentRubric, open(outputFileName, 'w'),
     #           indent=2, skipkeys=True)
 
-    json.dump(dictSkipKeys(canvasAssignmentRubric, '_requester'),
+    json.dump(dictSkipKeys(canvasAssignmentRubric, ['_requester']),
               open(outputFileName, 'w'),
               indent=2, skipkeys=True)
     LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
