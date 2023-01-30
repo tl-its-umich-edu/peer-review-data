@@ -1,7 +1,5 @@
-# standard libraries
 import logging
 
-# third-party libraries
 from django.db import models
 
 from canvasData import *
@@ -20,8 +18,8 @@ class Course(models.Model):
     course_code = models.TextField()
 
     @classmethod
-    def fromCanvasCourse(cls, course: CanvasCourse) -> Course:
-        return cls(**dictKeepKeys(course, ['id', 'name', 'course_code']))
+    def fromCanvasCourse(cls, c: CanvasCourse) -> Course:
+        return cls(c.id, c.name, c.course_code)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): "{self.course_code}"'
@@ -34,9 +32,8 @@ class User(models.Model):
     login_id = models.TextField()
 
     @classmethod
-    def fromCanvasUser(cls, user: CanvasUser) -> User:
-        return cls(
-            **dictKeepKeys(user, ['id', 'name', 'sortable_name', 'login_id']))
+    def fromCanvasUser(cls, u: CanvasUser) -> User:
+        return cls(u.id, u.name, u.sortable_name, u.login_id)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): "{self.login_id}"'
@@ -48,8 +45,8 @@ class Assignment(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
 
     @classmethod
-    def fromCanvasAssignment(cls, assignment: CanvasAssignment) -> Assignment:
-        return cls(**dictKeepKeys(assignment, ['id', 'name', 'course_id']))
+    def fromCanvasAssignment(cls, a: CanvasAssignment) -> Assignment:
+        return cls(a.id, a.name, a.course_id)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): "{self.name}"'
@@ -62,11 +59,9 @@ class Rubric(models.Model):
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
 
     @classmethod
-    def fromCanvasRubricAndAssignment(cls, rubric: CanvasRubric,
-                                      assignment: CanvasAssignment) -> Rubric:
-        return cls(
-            **dictKeepKeys(rubric, ['id', 'title', 'course_id']),
-            assignment_id=assignment.id)
+    def fromCanvasRubricAndAssignment(cls, r: CanvasRubric,
+                                      a: CanvasAssignment) -> Rubric:
+        return cls(r.id, r.title, r.course_id, a.id)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): "{self.title}" ' \
@@ -83,7 +78,10 @@ class Criterion(models.Model):
                                related_name='criteria')
 
     @classmethod
-    def fromCanvasCriterion(cls, criterion: dict) -> Criterion:
+    def fromCanvasCriterion(cls, criterion: dict):
+        # def fromCanvasCriterion(cls, criterion: dict) -> Criterion:
+        # FIXME: Why is returning `Criterion` here an error?!
+        # It works with other classes.
         return cls(
             **dictKeepKeys(criterion, ['id', 'title', 'course_id']))
         # TODO: Continue…
