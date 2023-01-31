@@ -74,14 +74,26 @@ class Submission(models.Model):
 
 class Criterion(models.Model):
     id = models.AutoField(primary_key=True)
+    canvas_id = models.TextField()
+    description = models.TextField()
+    long_description = models.TextField()
     rubric = models.ForeignKey(Rubric, on_delete=models.CASCADE,
                                related_name='criteria')
 
     @classmethod
-    def fromCanvasCriterion(cls, criterion: dict):
-        # def fromCanvasCriterion(cls, criterion: dict) -> Criterion:
+    def fromCanvasCriterionAndRubric(cls, c: dict, r: Rubric):
+        # def fromCanvasCriterion(cls, c: dict) -> Criterion:
         # FIXME: Why is returning `Criterion` here an error?!
         # It works with other classes.
+
+        # FIXME: This sets id values to `None`.
         return cls(
-            **dictKeepKeys(criterion, ['id', 'title', 'course_id']))
-        # TODO: Continue…
+            canvas_id=c['id'],
+            description=c['description'],
+            long_description=c['long_description'],
+            # **dictKeepKeys(c, ['id', 'description', 'long_description']),
+            rubric=r)
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} ({self.id}): ' \
+               f'"{self.description}" ({self.rubric})'

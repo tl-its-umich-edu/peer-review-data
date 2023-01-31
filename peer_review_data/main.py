@@ -18,9 +18,9 @@ def saveCourseAndUsers(canvasCourse: CanvasCourse) -> (bool, Course):
 
     # FIXME: DEBUG - uncomment for finished product
     # for canvasUser in canvasCourse.get_users():
-    #     user = models.User.fromCanvasUser(canvasUser)
-    #     LOGGER.info(f'Saving {user}…')
-    #     user.save()
+    #     u = models.User.fromCanvasUser(canvasUser)
+    #     LOGGER.info(f'Saving {u}…')
+    #     u.save()
 
     return True, course
 
@@ -33,9 +33,12 @@ def saveRubricAndCriteria(canvasRubric: CanvasRubric,
     rubric.save()
 
     # Get criteria from canvasRubric.data
-    for criterion in canvasRubric.data:
-        pass
-    # TODO: Continue…
+    for canvasCriterion in canvasRubric.data:
+        criterion = models.Criterion.fromCanvasCriterionAndRubric(
+            canvasCriterion, rubric)
+        LOGGER.info(f'Saving {criterion}…')
+        criterion.save()
+
 
 def main() -> None:
     timeStart: datetime = datetime.now(tz=utc)
@@ -65,9 +68,9 @@ def main() -> None:
 
     assignmentRubricId: int = canvasAssignment.rubric_settings.get('id')
     LOGGER.info(f'Assignment ({canvasAssignment.id}) has '
-                f'rubric ID ({assignmentRubricId})')
+                f'r ID ({assignmentRubricId})')
 
-    outputFileName: str = 'rubric.json'
+    outputFileName: str = 'r.json'
     canvasAssignmentRubric: CanvasRubric = canvasCourse.get_rubric(
         assignmentRubricId, include='assessments', style='full')
 
