@@ -76,6 +76,18 @@ class CanvasAssessment(object):
     def assessorId(self) -> int:
         return self.__assessment['assessor_id']
 
+    @property
+    def isPeerReview(self) -> bool:
+        return self.__assessment['assessment_type'] == 'peer_review'
+
+    @property
+    def hasSubmission(self) -> bool:
+        return self.__assessment['artifact_type'] == 'Submission'
+
+    @property
+    def submissionId(self) -> int:
+        return self.__assessment['artifact_id'] if self.hasSubmission else None
+
     data: List[dict]
 
 

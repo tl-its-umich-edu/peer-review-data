@@ -7,10 +7,6 @@ from canvasData import *
 LOGGER = logging.getLogger(__name__)
 
 
-class Assessment(models.Model):
-    id = models.IntegerField(primary_key=True)
-
-
 class Course(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.TextField()
@@ -67,12 +63,8 @@ class Rubric(models.Model):
                f'({self.course}; {self.assignment})'
 
 
-class Submission(models.Model):
-    id = models.AutoField(primary_key=True)
-
-
 class Criterion(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.IntegerField(primary_key=True)
     description = models.TextField()
     long_description = models.TextField()
     rubric = models.ForeignKey(Rubric, on_delete=models.CASCADE,
@@ -104,3 +96,17 @@ class Criterion(models.Model):
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): ' \
                f'"{self.description}" ({self.rubric})'
+
+
+class Assessment(models.Model):
+    id = models.IntegerField(primary_key=True)
+    rubric = models.ForeignKey(Rubric, on_delete=models.CASCADE)
+    assessor = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+class Comment(models.Model):
+    # Canvas does not tell unique IDs of each comment!
+    id = models.AutoField(primary_key=True)
+    assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE)
+    criterion = models.ForeignKey(Criterion, on_delete=models.CASCADE)
+    comments = models.TextField()

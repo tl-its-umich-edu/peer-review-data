@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import json
 from datetime import datetime, timedelta
+from typing import Dict
 
 from django.utils.timezone import utc
 
 from canvasData import *
 from peer_review_data import models
+from peer_review_data.models import Criterion
 from utils import dictSkipKeys
 
 LOGGER: Logger = getLogger(__name__)
@@ -26,19 +28,25 @@ def saveCourseAndUsers(canvasCourse: CanvasCourse) -> (bool, Course):
 
 
 def saveRubricAndCriteria(canvasRubric: CanvasRubric,
-                          canvasAssignment: CanvasAssignment):
+                          canvasAssignment: CanvasAssignment
+                          ) -> [Rubric, Dict[int, Criterion]]:
     rubric = models.Rubric.fromCanvasRubricAndAssignment(canvasRubric,
                                                          canvasAssignment)
     LOGGER.info(f'Saving {rubric}…')
     rubric.save()
 
+    criteria: Dict[int, Criterion] = {}
+
     # Get criteria from canvasRubric.data
     for canvasCriterion in canvasRubric.data:
         criterion, created = models.Criterion.fromCanvasCriterionAndRubric(
             CanvasCriteria(canvasCriterion), rubric)
-        if criterion and created:
-            LOGGER.info(f'Created {criterion}…')
-            criterion.save()
+        if criterion:
+            if created:
+                LOGGER.info(f'Created {criterion}…')
+            criteria[criterion.id] = criterion
+
+    return rubric, criteria
 
 
 def main() -> None:
@@ -117,13 +125,27 @@ def main() -> None:
     LOGGER.info(f'Rubric criteria from `canvasAssignmentRubric.data`…')
     LOGGER.info(json.dumps(canvasAssignmentRubric.data, indent=2))
 
-    saveRubricAndCriteria(canvasAssignmentRubric, canvasAssignment)
+    rubric, criteria = saveRubricAndCriteria(canvasAssignmentRubric,
+                                             canvasAssignment)
 
     # FIXME: Debugging with first assessment only.  Expand to all assessments.
-    assessment: CanvasAssessment = CanvasAssessment(
-        canvasAssignmentRubric.assessments[0])
-    LOGGER.info(f'**** Assessment 0 --> ID: ({assessment.id}), '
-                f'assessor ID: ({assessment.assessorId})')
+    # assessment: CanvasAssessment = CanvasAssessment(
+    #     canvasAssignmentRubric.assessments[0])
+    # LOGGER.info(f'**** Assessment 0 --> ID: ({assessment.id}), '
+    #             f'assessor ID: ({assessment.assessorId})')
+
+    assessment: CanvasAssessment
+
+    for assessment in [CanvasAssessment(a) for a in
+                       canvasAssignmentRubric.assessments]:
+        if not assessment.isPeerReview:
+            LOGGER.info('Skipping non-peer-review assessment '
+                        f'({assessment.id}).')
+            continue
+
+        LOGGER.info(f'Assessment --> ID: ({assessment.id}), '
+                    f'assessor ID: ({assessment.assessorId}), '
+                    f'peer review: "{str(assessment.isPeerReview)}"')
 
     timeEnd: datetime = datetime.now(tz=utc)
     timeElapsed: timedelta = timeEnd - timeStart
