@@ -49,6 +49,7 @@ class CanvasUser(User):
 class CanvasCourse(Course):
     id: int
     name: str
+    course_code: str
 
 
 class CanvasAssignment(Assignment):
@@ -83,6 +84,18 @@ class CanvasCriteria(object):
         self.__criteria = criteria
 
     @property
+    def id(self) -> int:
+        '''
+        Canvas' RubricCriterion objects contain ID *strings* of the format
+        `"_nnn…"`.  It's not clear from the docs *why* they are that format.
+        Here, we assume that the ID will be unique if everything following the
+        underscore is converted to an integer.
+
+        :return: RubricCriterion ID, stripped and converted to an integer.
+        '''
+        return int(self.__criteria['id'][1:])
+
+    @property
     def description(self) -> str:
         return self.__criteria['description']
 
@@ -90,8 +103,16 @@ class CanvasCriteria(object):
     def longDescription(self) -> str:
         return self.__criteria['long_description']
 
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} ({self.id}): ' \
+               f'"{self.description}"; "{self.longDescription}"'
+
 
 class CanvasRubric(Rubric):
+    id: int
+    title: str
+    course_id: int
+
     __criteria: List[CanvasCriteria] = None
     data: List[dict]
 

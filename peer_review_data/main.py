@@ -34,10 +34,11 @@ def saveRubricAndCriteria(canvasRubric: CanvasRubric,
 
     # Get criteria from canvasRubric.data
     for canvasCriterion in canvasRubric.data:
-        criterion = models.Criterion.fromCanvasCriterionAndRubric(
-            canvasCriterion, rubric)
-        LOGGER.info(f'Saving {criterion}…')
-        criterion.save()
+        criterion, created = models.Criterion.fromCanvasCriterionAndRubric(
+            CanvasCriteria(canvasCriterion), rubric)
+        if criterion and created:
+            LOGGER.info(f'Created {criterion}…')
+            criterion.save()
 
 
 def main() -> None:
@@ -68,9 +69,9 @@ def main() -> None:
 
     assignmentRubricId: int = canvasAssignment.rubric_settings.get('id')
     LOGGER.info(f'Assignment ({canvasAssignment.id}) has '
-                f'r ID ({assignmentRubricId})')
+                f'rubric ID ({assignmentRubricId})')
 
-    outputFileName: str = 'r.json'
+    outputFileName: str = 'rubric.json'
     canvasAssignmentRubric: CanvasRubric = canvasCourse.get_rubric(
         assignmentRubricId, include='assessments', style='full')
 

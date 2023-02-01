@@ -3,7 +3,6 @@ import logging
 from django.db import models
 
 from canvasData import *
-from utils import dictKeepKeys
 
 LOGGER = logging.getLogger(__name__)
 
@@ -74,25 +73,33 @@ class Submission(models.Model):
 
 class Criterion(models.Model):
     id = models.AutoField(primary_key=True)
-    canvas_id = models.TextField()
     description = models.TextField()
     long_description = models.TextField()
     rubric = models.ForeignKey(Rubric, on_delete=models.CASCADE,
                                related_name='criteria')
 
     @classmethod
-    def fromCanvasCriterionAndRubric(cls, c: dict, r: Rubric):
+    def fromCanvasCriterionAndRubric(cls, c: CanvasCriteria, r: Rubric):
         # def fromCanvasCriterion(cls, c: dict) -> Criterion:
         # FIXME: Why is returning `Criterion` here an error?!
         # It works with other classes.
 
-        # FIXME: This sets id values to `None`.
-        return cls(
-            canvas_id=c['id'],
-            description=c['description'],
-            long_description=c['long_description'],
-            # **dictKeepKeys(c, ['id', 'description', 'long_description']),
-            rubric=r)
+        criterion: Criterion
+        created: bool
+
+        try:
+            criterion, created = cls.objects.get_or_create(
+                id=c.id,
+                description=c.description,
+                long_description=c.longDescription,
+                rubric=r)
+        except Exception as e:
+            LOGGER.warning('Error creating Criterion for '
+                           f'({c}) and ({r}): {e}')
+            # raise e
+            return False, False
+
+        return criterion, created
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): ' \
