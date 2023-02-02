@@ -61,8 +61,17 @@ class CanvasAssignment(Assignment):
     rubric_settings: dict
 
 
-class CanvasAssessmentComment(object):
-    pass
+class CanvasComment(object):
+    def __init__(self, comment: dict):
+        self.__comment = comment
+
+    @property
+    def criterionId(self) -> int:
+        return int(self.__comment['criterion_id'][1:])
+
+    @property
+    def comments(self) -> str:
+        return self.__comment['comments']
 
 
 class CanvasAssessment(object):
@@ -88,6 +97,10 @@ class CanvasAssessment(object):
     @property
     def submissionId(self) -> int:
         return self.__assessment['artifact_id'] if self.hasSubmission else None
+
+    @property
+    def comments(self) -> List[CanvasComment]:
+        return self.__assessment['data']
 
     data: List[dict]
 

@@ -30,9 +30,6 @@ def saveSubmissions(canvasAssignment: CanvasAssignment):
     canvasSubmissions: List[CanvasSubmission] = \
         canvasAssignment.get_submissions()
 
-    LOGGER.info(json.dumps(dictSkipKeys(canvasSubmissions[0], ['_requester']),
-                           indent=2, default=str))
-
     for canvasSubmission in canvasSubmissions:
         '''
         The only untyped submission found during development was from 
@@ -88,18 +85,37 @@ def saveAssessmentsAndComments(canvasAssessments: List[CanvasAssessment]):
     # LOGGER.info(f'**** Assessment 0 --> ID: ({assessment.id}), '
     #             f'assessor ID: ({assessment.assessorId})')
 
-    assessment: CanvasAssessment
-
-    for assessment in [CanvasAssessment(a) for a in
-                       canvasAssessments]:
-        if not assessment.isPeerReview:
+    canvasAssessment: CanvasAssessment
+    for canvasAssessment in [CanvasAssessment(a) for a in
+                             canvasAssessments]:
+        if not canvasAssessment.isPeerReview:
             LOGGER.info('Skipping non-peer-review assessment '
-                        f'({assessment.id}).')
+                        f'({canvasAssessment.id}).')
             continue
 
-        LOGGER.info(f'Assessment --> ID: ({assessment.id}), '
-                    f'assessor ID: ({assessment.assessorId}), '
-                    f'peer review: "{str(assessment.isPeerReview)}"')
+        assessment: models.Assessment = None
+        try:
+            assessment = \
+                models.Assessment.fromCanvasAssessment(canvasAssessment)
+            LOGGER.info(f'Saving {assessment}…')
+            assessment.save()
+        except Exception as e:
+            # XXX: Catches assessments referring to non-existent submissions!
+            LOGGER.warning(f'Exception while saving Assessment '
+                           f'({canvasAssessment.id}): {e}')
+            LOGGER.warning(json.dumps(
+                dictSkipKeys(canvasAssessment, ['_requester']),
+                indent=2, default=str))
+
+        if assessment:
+            canvasComment: CanvasComment
+            for canvasComment in [CanvasComment(c) for c in
+                                  canvasAssessment.comments]:
+                comment: models.Comment = \
+                    models.Comment.fromCanvasCommentAndAssessment(
+                        canvasComment, assessment)
+                LOGGER.info(f'Saving {comment}…')
+                comment.save()
 
 
 def main() -> None:
@@ -138,8 +154,17 @@ def main() -> None:
 
     if not hasattr(canvasAssignmentRubric, 'assessments'):
         LOGGER.info(f'Skipping assignment ({ASSIGNMENT_ID}) in '
-                    f'course ({COURSE_ID}): No peer reviews '
-                    '("assessments") found.')
+                    f'course ({COURSE_ID}): Not configured for peer reviews '
+                    '("assessments").')
+        sys.exit()
+
+    LOGGER.info(f'Assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}) is '
+                'configured for peer reviews ("assessments")…')
+
+    if not hasattr(canvasAssignmentRubric, 'assessments'):
+        LOGGER.info(
+            f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
+            'No peer reviews ("assessments") were found.')
         sys.exit()
 
     LOGGER.info(f'Assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}) has '
@@ -153,8 +178,8 @@ def main() -> None:
     LOGGER.info(f'Saving {assignment}…')
     assignment.save()
 
+    LOGGER.info(f'Saving submissions for {assignment}…')
     saveSubmissions(canvasAssignment)
-    sys.exit()
 
     # LOGGER.info(json.dumps(dictSkipKeys(canvasAssignment, ['_requester']),
     #                        default=str))
@@ -167,23 +192,19 @@ def main() -> None:
               indent=2, skipkeys=True)
     LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
 
-    if not hasattr(canvasAssignmentRubric, 'assessments'):
-        LOGGER.info(
-            f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
-            'No peer reviews ("assessments") were found.')
-        sys.exit()
-
     '''
     Rubric objects always contain criteria in the `data` property, and also
     in the `criteria` property when assessments are requested.  Use `data`
     to ensure access to the criteria.
     '''
-    LOGGER.info(f'Rubric criteria from `canvasAssignmentRubric.data`…')
-    LOGGER.info(json.dumps(canvasAssignmentRubric.data, indent=2))
+    # LOGGER.info(f'Rubric criteria from `canvasAssignmentRubric.data`…')
+    # LOGGER.info(json.dumps(canvasAssignmentRubric.data, indent=2))
 
+    LOGGER.info('Saving rubric and criteria…')
     rubric, criteria = saveRubricAndCriteria(canvasAssignmentRubric,
                                              canvasAssignment)
 
+    LOGGER.info('Saving assessments and comments…')
     saveAssessmentsAndComments(canvasAssignmentRubric.assessments)
 
     timeEnd: datetime = datetime.now(tz=utc)

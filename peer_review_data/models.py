@@ -72,8 +72,7 @@ class Criterion(models.Model):
 
     @classmethod
     def fromCanvasCriterionAndRubric(cls, c: CanvasCriteria, r: Rubric):
-        # def fromCanvasCriterion(cls, c: dict) -> Criterion:
-        # FIXME: Why is returning `Criterion` here an error?!
+        # FIXME: Why does returning `Criterion` here cause an error?!
         # It works with other classes.
 
         criterion: Criterion
@@ -114,13 +113,43 @@ class Submission(models.Model):
 
 class Assessment(models.Model):
     id = models.IntegerField(primary_key=True)
-    rubric = models.ForeignKey(Rubric, on_delete=models.CASCADE)
     assessor = models.ForeignKey(User, on_delete=models.CASCADE)
+    submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
+
+    @classmethod
+    def fromCanvasAssessment(cls, a: CanvasAssessment):
+        # FIXME: Why does returning `Assessment` here cause an error?!
+        # It works with other classes.
+        submission: Submission = Submission.objects.get(id=a.submissionId)
+        if submission:
+            LOGGER.info(f'Got ({submission})!')
+        else:
+            LOGGER.info(f'Could not find submission with ID ({a.submissionId})!')
+        return cls(a.id, a.assessorId, a.submissionId)
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} ({self.id}): ' \
+               f'({self.assessor}; {self.submission})'
 
 
 class Comment(models.Model):
-    # Canvas does not tell unique IDs of each comment!
+    '''
+    Strictly speaking, this should be `AssessmentComment`.  This app will
+    probably never process any other kind of comment, though, so we'll use
+    a short name here for brevity.
+    '''
+    # Canvas does not give unique IDs for each comment!
     id = models.AutoField(primary_key=True)
     assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE)
     criterion = models.ForeignKey(Criterion, on_delete=models.CASCADE)
     comments = models.TextField()
+
+    @classmethod
+    def fromCanvasCommentAndAssessment(cls, c: CanvasComment, a: Assessment):
+        # FIXME: Why does returning `Comment` here cause an error?!
+        # It works with other classes.
+        return cls(None, a.id, c.criterionId, c.comments)
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} ({self.id}): ' \
+               f'({self.assessment}; {self.criterion}; {self.comments})'
