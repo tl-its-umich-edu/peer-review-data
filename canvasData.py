@@ -8,6 +8,7 @@ from canvasapi import Canvas
 from canvasapi.assignment import Assignment
 from canvasapi.course import Course
 from canvasapi.rubric import Rubric
+from canvasapi.submission import Submission
 from canvasapi.user import User
 
 # from canvasapi.canvas_object import CanvasObject
@@ -140,3 +141,10 @@ class CanvasRubric(Rubric):
         return self.__criteria
 
     assessments: List[CanvasAssessment]
+
+
+class CanvasSubmission(Submission):
+    id: int
+    assignment_id: int
+    user_id: int
+    submission_type: str

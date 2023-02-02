@@ -98,6 +98,20 @@ class Criterion(models.Model):
                f'"{self.description}" ({self.rubric})'
 
 
+class Submission(models.Model):
+    id = models.IntegerField(primary_key=True)
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    @classmethod
+    def fromCanvasSubmission(cls, s: CanvasSubmission) -> Submission:
+        return cls(s.id, s.assignment_id, s.user_id)
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} ({self.id}): ' \
+               f'({self.assignment}; {self.user})'
+
+
 class Assessment(models.Model):
     id = models.IntegerField(primary_key=True)
     rubric = models.ForeignKey(Rubric, on_delete=models.CASCADE)
