@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 from typing import Self  # Cannot find reference 'Self' in 'typing.pyi'
 

@@ -148,7 +148,7 @@ def main() -> None:
     LOGGER.info(f'Assignment ({canvasAssignment.id}) has '
                 f'rubric ID ({assignmentRubricId})')
 
-    outputFileName: str = 'rubric.json'
+    # outputFileName: str = 'rubric.json'
     canvasAssignmentRubric: CanvasRubric = canvasCourse.get_rubric(
         assignmentRubricId, include='assessments', style='full')
 

@@ -1,20 +1,13 @@
-# standard libraries
+# -*- coding: utf-8 -*-
 import os
 from typing import Any
 
-# local libraries
-# from constants import ROOT_DIR
-
-
 # Django settings
 
-# BASE_DIR: str = ROOT_DIR
 BASE_DIR: str = os.path.dirname(os.path.abspath(__file__))
 
-CONFIG_DIR: str = os.path.join(BASE_DIR,
-                               os.getenv('ENV_DIR',
-                                         os.path.join('config',
-                                                      'secrets')))
+CONFIG_DIR: str = os.path.join(
+    BASE_DIR, os.getenv('ENV_DIR', os.path.join('config', 'secrets')))
 
 DATABASES: dict[str, dict[str, Any]] = {
     'default': {
@@ -40,11 +33,6 @@ if bool(int(os.getenv('EMAIL_DEBUG', '1'))):
 EMAIL_HOST: str = os.getenv('SMTP_HOST', '')
 EMAIL_PORT: int = int(os.getenv('SMTP_PORT', 0))
 EMAIL_USE_TLS: bool = True
-
-# FIXTURE_DIRS: list[str] = [
-#     CONFIG_DIR,
-#     os.path.join(BASE_DIR, 'test', 'fixtures')
-# ]
 
 LOGGING: dict[str, Any] = {
     'version': 1,
@@ -79,14 +67,6 @@ INSTALLED_APPS: list[str] = [
 ]
 
 SECRET_KEY: str = os.getenv('SECRET_KEY', '-- A SECRET KEY --')
-
-# TEMPLATES: list[dict[str, Any]] = [
-#     {
-#         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-#         'DIRS': ['templates'],
-#         'APP_DIRS': True
-#     }
-# ]
 
 TIME_ZONE: str = os.getenv('TIME_ZONE', 'UTC')
 USE_TZ: bool = True

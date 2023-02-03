@@ -1,9 +1,8 @@
-# standard libraries
+# -*- coding: utf-8 -*-
 import logging
 import os
 import sys
 
-# third-party libraries
 from dotenv import load_dotenv
 
 CONFIG_DIR: str = os.getenv('ENV_DIR', os.path.join('config', 'secrets'))

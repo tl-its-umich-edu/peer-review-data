@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from logging import Logger, getLogger
 
 from django.core.management.base import BaseCommand
@@ -14,4 +15,7 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options) -> None:
+        """
+        Entrypoint method required by BaseCommand class (see Django docs).
+        """
         main()
