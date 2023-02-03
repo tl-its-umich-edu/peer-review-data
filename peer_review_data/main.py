@@ -17,11 +17,10 @@ def saveCourseAndUsers(canvasCourse: CanvasCourse) -> (bool, Course):
     LOGGER.info(f'Saving {course}…')
     course.save()
 
-    # FIXME: DEBUG - uncomment for finished product
-    # for canvasUser in canvasCourse.get_users():
-    #     u = models.User.fromCanvasUser(canvasUser)
-    #     LOGGER.info(f'Saving {u}…')
-    #     u.save()
+    for canvasUser in canvasCourse.get_users():
+        u = models.User.fromCanvasUser(canvasUser)
+        LOGGER.info(f'Saving {u}…')
+        u.save()
 
     return True, course
 
@@ -32,11 +31,12 @@ def saveSubmissions(canvasAssignment: CanvasAssignment):
 
     for canvasSubmission in canvasSubmissions:
         '''
-        The only untyped submission found during development was from 
+        The only untyped submission found during development was from
         "Test Student".  It was discovered because that student wasn't
-        included with the rest of the course users and the relationship to
-        the user couldn't be created.  Testing for untyped submissions
-        will eliminate those from "Test Student" and possibly others.
+        included with the rest of the course users and the relationship
+        between submission and missing user couldn't be created.  Testing
+        for untyped submissions eliminates those from "Test Student" and
+        possibly others.
         '''
         if canvasSubmission.submission_type is None:
             LOGGER.warning('Skipping untyped submission '
@@ -184,13 +184,10 @@ def main() -> None:
     # LOGGER.info(json.dumps(dictSkipKeys(canvasAssignment, ['_requester']),
     #                        default=str))
 
-    # json.dump(assignmentRubric, open(outputFileName, 'w'),
+    # json.dump(dictSkipKeys(canvasAssignmentRubric, ['_requester']),
+    #           open(outputFileName, 'w'),
     #           indent=2, skipkeys=True)
-
-    json.dump(dictSkipKeys(canvasAssignmentRubric, ['_requester']),
-              open(outputFileName, 'w'),
-              indent=2, skipkeys=True)
-    LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
+    # LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
 
     '''
     Rubric objects always contain criteria in the `data` property, and also
