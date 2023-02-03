@@ -1,4 +1,5 @@
 import logging
+from typing import Self  # Cannot find reference 'Self' in 'typing.pyi'
 
 from django.db import models
 
@@ -13,7 +14,7 @@ class Course(models.Model):
     course_code = models.TextField()
 
     @classmethod
-    def fromCanvasCourse(cls, c: CanvasCourse) -> Course:
+    def fromCanvasCourse(cls, c: CanvasCourse) -> Self:
         return cls(c.id, c.name, c.course_code)
 
     def __str__(self) -> str:
@@ -27,7 +28,7 @@ class User(models.Model):
     login_id = models.TextField()
 
     @classmethod
-    def fromCanvasUser(cls, u: CanvasUser) -> User:
+    def fromCanvasUser(cls, u: CanvasUser) -> Self:
         return cls(u.id, u.name, u.sortable_name, u.login_id)
 
     def __str__(self) -> str:
@@ -40,7 +41,7 @@ class Assignment(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
 
     @classmethod
-    def fromCanvasAssignment(cls, a: CanvasAssignment) -> Assignment:
+    def fromCanvasAssignment(cls, a: CanvasAssignment) -> Self:
         return cls(a.id, a.name, a.course_id)
 
     def __str__(self) -> str:
@@ -50,12 +51,13 @@ class Assignment(models.Model):
 class Rubric(models.Model):
     id = models.IntegerField(primary_key=True)
     title = models.TextField()
+    # TODO: Remove `course`?  Already related to it through `assignment`.
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
 
     @classmethod
     def fromCanvasRubricAndAssignment(cls, r: CanvasRubric,
-                                      a: CanvasAssignment) -> Rubric:
+                                      a: CanvasAssignment) -> Self:
         return cls(r.id, r.title, r.course_id, a.id)
 
     def __str__(self) -> str:
@@ -71,9 +73,8 @@ class Criterion(models.Model):
                                related_name='criteria')
 
     @classmethod
-    def fromCanvasCriterionAndRubric(cls, c: CanvasCriteria, r: Rubric):
-        # FIXME: Why does returning `Criterion` here cause an error?!
-        # It works with other classes.
+    def fromCanvasCriterionAndRubric(
+            cls, c: CanvasCriteria, r: Rubric) -> Self:
 
         criterion: Criterion
         created: bool
@@ -87,7 +88,6 @@ class Criterion(models.Model):
         except Exception as e:
             LOGGER.warning('Error creating Criterion for '
                            f'({c}) and ({r}): {e}')
-            # raise e
             return False, False
 
         return criterion, created
@@ -103,7 +103,7 @@ class Submission(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     @classmethod
-    def fromCanvasSubmission(cls, s: CanvasSubmission) -> Submission:
+    def fromCanvasSubmission(cls, s: CanvasSubmission) -> Self:
         return cls(s.id, s.assignment_id, s.user_id)
 
     def __str__(self) -> str:
@@ -117,14 +117,14 @@ class Assessment(models.Model):
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
     @classmethod
-    def fromCanvasAssessment(cls, a: CanvasAssessment):
-        # FIXME: Why does returning `Assessment` here cause an error?!
-        # It works with other classes.
+    def fromCanvasAssessment(cls, a: CanvasAssessment) -> Self:
+
         submission: Submission = Submission.objects.get(id=a.submissionId)
         if submission:
             LOGGER.info(f'Got ({submission})!')
         else:
-            LOGGER.info(f'Could not find submission with ID ({a.submissionId})!')
+            LOGGER.info('Could not find submission with ID '
+                        f'({a.submissionId})!')
         return cls(a.id, a.assessorId, a.submissionId)
 
     def __str__(self) -> str:
@@ -145,9 +145,8 @@ class Comment(models.Model):
     comments = models.TextField()
 
     @classmethod
-    def fromCanvasCommentAndAssessment(cls, c: CanvasComment, a: Assessment):
-        # FIXME: Why does returning `Comment` here cause an error?!
-        # It works with other classes.
+    def fromCanvasCommentAndAssessment(
+            cls, c: CanvasComment, a: Assessment) -> Self:
         return cls(None, a.id, c.criterionId, c.comments)
 
     def __str__(self) -> str:
