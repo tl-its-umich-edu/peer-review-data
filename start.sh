@@ -15,5 +15,15 @@ fi
 echo 'Running migrations…'
 python manage.py migrate
 
+#python manage.py loaddata "$FIXTURES_FILE"
+#
+#if [ "${TEST_MODE}" == "True" ]; then
+#    echo "Running tests"
+#    coverage run manage.py test -v 3
+#    coverage report
+#else
+#    echo "Running main placement-exams process"
+#    python manage.py run
+#fi
 echo 'Running main application…'
 python manage.py run
