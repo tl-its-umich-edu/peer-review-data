@@ -9,6 +9,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Course(models.Model):
+    class Meta:
+        db_table = Course.__name__.lower()
+
     id = models.IntegerField(primary_key=True)
     name = models.TextField()
     course_code = models.TextField()
@@ -22,6 +25,9 @@ class Course(models.Model):
 
 
 class User(models.Model):
+    class Meta:
+        db_table = User.__name__.lower()
+
     id = models.IntegerField(primary_key=True)
     name = models.TextField()
     sortable_name = models.TextField()
@@ -36,6 +42,9 @@ class User(models.Model):
 
 
 class Assignment(models.Model):
+    class Meta:
+        db_table = Assignment.__name__.lower()
+
     id = models.IntegerField(primary_key=True)
     name = models.TextField()
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
@@ -49,6 +58,9 @@ class Assignment(models.Model):
 
 
 class Rubric(models.Model):
+    class Meta:
+        db_table = Rubric.__name__.lower()
+
     id = models.IntegerField(primary_key=True)
     title = models.TextField()
     # TODO: Remove `course`?  Already related to it through `assignment`.
@@ -66,6 +78,10 @@ class Rubric(models.Model):
 
 
 class Criterion(models.Model):
+    class Meta:
+        db_table = 'criterion'
+        # db_table = Criterion.__name__.lower()  # XXX: error?!
+
     id = models.IntegerField(primary_key=True)
     description = models.TextField()
     long_description = models.TextField()
@@ -98,6 +114,9 @@ class Criterion(models.Model):
 
 
 class Submission(models.Model):
+    class Meta:
+        db_table = Submission.__name__.lower()
+
     id = models.IntegerField(primary_key=True)
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -112,6 +131,10 @@ class Submission(models.Model):
 
 
 class Assessment(models.Model):
+    class Meta:
+        db_table = 'assessment'
+        # db_table = Assessment.__name__.lower()  # XXX: error?!
+
     id = models.IntegerField(primary_key=True)
     assessor = models.ForeignKey(User, on_delete=models.CASCADE)
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
@@ -133,11 +156,16 @@ class Assessment(models.Model):
 
 
 class Comment(models.Model):
-    '''
+    """
     Strictly speaking, this should be `AssessmentComment`.  This app will
     probably never process any other kind of comment, though, so we'll use
     a short name here for brevity.
-    '''
+    """
+
+    class Meta:
+        db_table = 'comment'
+        # db_table = Comment.__name__.lower()  # XXX: error?!
+
     # Canvas does not give unique IDs for each comment!
     id = models.AutoField(primary_key=True)
     assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE)
