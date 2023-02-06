@@ -9,7 +9,7 @@ if [ -n "${DOCKER_COMPOSE}" ]; then
     echo 'DB ready.'
 
     echo 'Creating migrations for model changes…'
-    python manage.py makemigrations
+    python manage.py makemigrations peer_review_data
 fi
 
 echo 'Running migrations…'
