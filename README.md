@@ -21,3 +21,13 @@ Use Docker compose to run in a local development environment.
     ```
 
 1. Examine the data in the output file, `assessments.json`. 
+
+## Resources
+
+### Canvas API functions
+
+1. `/api/v1/courses/<course_id>` — canvasapi.canvas.Canvas.get_course()
+2. `/api/v1/courses/<course_id>/assignments/<assignment_id>` — canvasapi.course.Course.get_assignment()
+3. `/api/v1/courses/<course_id>/rubrics/<rubric_id>` — canvasapi.course.Course.get_rubric()
+4. `/api/v1/courses/545451/assignments/1747535/submissions` — canvasapi.assignment.Assignment.get_submissions()
+5. `/api/v1/courses/<course_id>/search_users` — canvasapi.course.Course.get_users()
