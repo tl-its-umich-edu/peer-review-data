@@ -70,7 +70,11 @@ def saveRubricAndCriteria(canvasRubric: CanvasRubric,
 
     criteria: Dict[int, models.Criterion] = {}
 
-    # Get criteria from canvasRubric.data
+    '''
+    Rubric objects always contain criteria in the `data` property, and also
+    in the `criteria` property when assessments are requested.  Use `data`
+    to ensure access to the criteria.
+    '''
     for canvasCriterion in canvasRubric.data:
         criterion = models.Criterion.fromCanvasCriterionAndRubric(
             CanvasCriteria(canvasCriterion), rubric)
@@ -81,7 +85,16 @@ def saveRubricAndCriteria(canvasRubric: CanvasRubric,
     return rubric, criteria
 
 
-def saveAssessmentsAndComments(canvasAssessments: List[CanvasAssessment]):
+def saveAssessmentsAndComments(
+        canvasAssessments: List[CanvasAssessment]) -> None:
+    """
+    Given a list of `CanvasAssessment` objects, skip those that are not
+    peer reviews and save the rest.  When saving assessments, save their
+    comments with the appropriate model.
+
+    :param canvasAssessments:
+    :return: None
+    """
     canvasAssessment: CanvasAssessment
     for canvasAssessment in [CanvasAssessment(a) for a in
                              canvasAssessments]:
@@ -100,7 +113,7 @@ def saveAssessmentsAndComments(canvasAssessments: List[CanvasAssessment]):
             # XXX: Catches assessments referring to non-existent submissions!
             LOGGER.warning(f'Error saving Assessment '
                            f'({canvasAssessment.id}): {e}')
-            LOGGER.debug(json.dumps(
+            LOGGER.debug('Assessment data: ' + json.dumps(
                 dictSkipKeys(canvasAssessment, ['_requester']),
                 indent=2, default=str))
 
@@ -127,9 +140,6 @@ def main() -> None:
     courseSaved = False
     course: models.Course | None = None
     user: models.User | None = None
-
-    # LOGGER.info(dictSkipKeys(canvasCourse, ['_requester']))
-    # sys.exit()
 
     canvasAssignment: CanvasAssignment = canvasCourse.get_assignment(
         ASSIGNMENT_ID)
@@ -179,18 +189,6 @@ def main() -> None:
 
     LOGGER.info(f'Saving submissions for {assignment}…')
     saveSubmissions(canvasAssignment)
-
-    # LOGGER.info(json.dumps(dictSkipKeys(canvasAssignment, ['_requester']),
-    #                        default=str))
-
-
-    '''
-    Rubric objects always contain criteria in the `data` property, and also
-    in the `criteria` property when assessments are requested.  Use `data`
-    to ensure access to the criteria.
-    '''
-    # LOGGER.info(f'Rubric criteria from `canvasAssignmentRubric.data`…')
-    # LOGGER.info(json.dumps(canvasAssignmentRubric.data, indent=2))
 
     LOGGER.info('Saving rubric and criteria…')
     rubric, criteria = saveRubricAndCriteria(canvasAssignmentRubric,
