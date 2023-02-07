@@ -17,10 +17,14 @@ def saveCourseAndUsers(canvasCourse: CanvasCourse) -> (bool, Course):
     LOGGER.info(f'Saving {course}…')
     course.save()
 
+    LOGGER.info(f'Saving users of {course}…')
     for canvasUser in canvasCourse.get_users():
-        u = models.User.fromCanvasUser(canvasUser)
-        LOGGER.info(f'Saving {u}…')
-        u.save()
+        try:
+            user = models.User.fromCanvasUser(canvasUser)
+            LOGGER.debug(f'Saving {user}…')
+            user.save()
+        except Exception as e:
+            LOGGER.warning(f'Error saving {user}: {e}')
 
     return True, course
 
@@ -47,10 +51,10 @@ def saveSubmissions(canvasAssignment: CanvasAssignment):
         try:
             submission: models.Submission = \
                 models.Submission.fromCanvasSubmission(canvasSubmission)
-            LOGGER.info(f'Saving {submission}…')
+            LOGGER.debug(f'Saving {submission}…')
             submission.save()
         except Exception as e:
-            LOGGER.warning(f'Exception while saving Submission: {e}')
+            LOGGER.warning(f'Error saving Submission: {e}')
             LOGGER.warning(json.dumps(
                 dictSkipKeys(canvasSubmission, ['_requester']),
                 indent=2, default=str))
@@ -68,23 +72,16 @@ def saveRubricAndCriteria(canvasRubric: CanvasRubric,
 
     # Get criteria from canvasRubric.data
     for canvasCriterion in canvasRubric.data:
-        criterion, created = models.Criterion.fromCanvasCriterionAndRubric(
+        criterion = models.Criterion.fromCanvasCriterionAndRubric(
             CanvasCriteria(canvasCriterion), rubric)
-        if criterion:
-            if created:
-                LOGGER.info(f'Created {criterion}…')
-            criteria[criterion.id] = criterion
+        LOGGER.info(f'Saving {criterion}…')
+        criterion.save()
+        criteria[criterion.id] = criterion
 
     return rubric, criteria
 
 
 def saveAssessmentsAndComments(canvasAssessments: List[CanvasAssessment]):
-    # FIXME: Debugging with first assessment only.  Expand to all assessments.
-    # assessment: CanvasAssessment = CanvasAssessment(
-    #     canvasAssignmentRubric.assessments[0])
-    # LOGGER.info(f'**** Assessment 0 --> ID: ({assessment.id}), '
-    #             f'assessor ID: ({assessment.assessorId})')
-
     canvasAssessment: CanvasAssessment
     for canvasAssessment in [CanvasAssessment(a) for a in
                              canvasAssessments]:
@@ -97,13 +94,13 @@ def saveAssessmentsAndComments(canvasAssessments: List[CanvasAssessment]):
         try:
             assessment = \
                 models.Assessment.fromCanvasAssessment(canvasAssessment)
-            LOGGER.info(f'Saving {assessment}…')
+            LOGGER.debug(f'Saving {assessment}…')
             assessment.save()
         except Exception as e:
             # XXX: Catches assessments referring to non-existent submissions!
-            LOGGER.warning(f'Exception while saving Assessment '
+            LOGGER.warning(f'Error saving Assessment '
                            f'({canvasAssessment.id}): {e}')
-            LOGGER.warning(json.dumps(
+            LOGGER.debug(json.dumps(
                 dictSkipKeys(canvasAssessment, ['_requester']),
                 indent=2, default=str))
 
@@ -111,11 +108,14 @@ def saveAssessmentsAndComments(canvasAssessments: List[CanvasAssessment]):
             canvasComment: CanvasComment
             for canvasComment in [CanvasComment(c) for c in
                                   canvasAssessment.comments]:
-                comment: models.Comment = \
-                    models.Comment.fromCanvasCommentAndAssessment(
-                        canvasComment, assessment)
-                LOGGER.info(f'Saving {comment}…')
-                comment.save()
+                try:
+                    comment: models.Comment = \
+                        models.Comment.fromCanvasCommentAndAssessment(
+                            canvasComment, assessment)
+                    LOGGER.debug(f'Saving {comment}…')
+                    comment.save()
+                except Exception as e:
+                    LOGGER.warning(f'Error saving {comment}: {e}')
 
 
 def main() -> None:
@@ -148,7 +148,6 @@ def main() -> None:
     LOGGER.info(f'Assignment ({canvasAssignment.id}) has '
                 f'rubric ID ({assignmentRubricId})')
 
-    # outputFileName: str = 'rubric.json'
     canvasAssignmentRubric: CanvasRubric = canvasCourse.get_rubric(
         assignmentRubricId, include='assessments', style='full')
 
@@ -184,10 +183,6 @@ def main() -> None:
     # LOGGER.info(json.dumps(dictSkipKeys(canvasAssignment, ['_requester']),
     #                        default=str))
 
-    # json.dump(dictSkipKeys(canvasAssignmentRubric, ['_requester']),
-    #           open(outputFileName, 'w'),
-    #           indent=2, skipkeys=True)
-    # LOGGER.info(f'Assessment raw JSON data saved to file "{outputFileName}".')
 
     '''
     Rubric objects always contain criteria in the `data` property, and also

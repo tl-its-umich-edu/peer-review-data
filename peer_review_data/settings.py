@@ -39,8 +39,8 @@ LOGGING: dict[str, Any] = {
     'disable_existing_loggers': False,
     'formatters': {
         'standard': {
-            'format': '%(asctime)s - %(name)s - %(funcName)s - %(levelname)s '
-                      '- %(message)s '
+            'format': '%(asctime)s - %(name)s:%(lineno)d - %(funcName)s '
+                      '- %(levelname)s - %(message)s '
         }
     },
     'handlers': {
