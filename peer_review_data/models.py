@@ -64,18 +64,16 @@ class Rubric(models.Model):
 
     id = models.IntegerField(primary_key=True)
     title = models.TextField()
-    # TODO: Remove `course`?  Already related to it through `assignment`.
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
 
     @classmethod
     def fromCanvasRubricAndAssignment(cls, r: CanvasRubric,
                                       a: CanvasAssignment) -> Self:
-        return cls(r.id, r.title, r.course_id, a.id)
+        return cls(r.id, r.title, a.id)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): "{self.title}" ' \
-               f'({self.course}; {self.assignment})'
+               f'({self.assignment})'
 
 
 class Criterion(models.Model):
@@ -92,22 +90,7 @@ class Criterion(models.Model):
     @classmethod
     def fromCanvasCriterionAndRubric(
             cls, c: CanvasCriteria, r: Rubric) -> Self:
-
-        criterion: Criterion
-        created: bool
-
-        try:
-            criterion, created = cls.objects.get_or_create(
-                id=c.id,
-                description=c.description,
-                long_description=c.longDescription,
-                rubric=r)
-        except Exception as e:
-            LOGGER.warning('Error creating Criterion for '
-                           f'({c}) and ({r}): {e}')
-            return False, False
-
-        return criterion, created
+        return cls(c.id, c.description, c.longDescription, r.id)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): ' \
@@ -145,7 +128,7 @@ class Assessment(models.Model):
 
         submission: Submission = Submission.objects.get(id=a.submissionId)
         if submission:
-            LOGGER.info(f'Got ({submission})!')
+            LOGGER.debug(f'Got ({submission})!')
         else:
             LOGGER.info('Could not find submission with ID '
                         f'({a.submissionId})!')
