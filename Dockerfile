@@ -14,5 +14,4 @@ RUN pip install -r /app/requirements.txt
 # With `docker compose`, dev. directory already mounted at /app
 #COPY . .
 
-#CMD ["/bin/cat", "/dev/zero"]
 CMD ["./start.sh"]
