@@ -111,14 +111,14 @@ class CanvasCriteria(object):
 
     @property
     def id(self) -> int:
-        '''
+        """
         Canvas' RubricCriterion objects contain ID *strings* of the format
         `"_nnn…"`.  It's not clear from the docs *why* they are that format.
         Here, we assume that the ID will be unique if everything following the
         underscore is converted to an integer.
 
         :return: RubricCriterion ID, stripped and converted to an integer.
-        '''
+        """
         return int(self.__criteria['id'][1:])
 
     @property
