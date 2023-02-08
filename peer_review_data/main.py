@@ -170,7 +170,7 @@ def main() -> None:
     LOGGER.info(f'Assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}) is '
                 'configured for peer reviews ("assessments")…')
 
-    if not hasattr(canvasAssignmentRubric, 'assessments'):
+    if len(canvasAssignmentRubric.assessments) == 0:
         LOGGER.info(
             f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
             'No peer reviews ("assessments") were found.')
