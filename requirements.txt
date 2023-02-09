@@ -1,4 +1,7 @@
-canvasapi
-Django==3.2.16
+canvasapi==3.0.0
+# Django 4.1.6 is available and works, but 4.1.* extended support ends in
+# December 2023, whereas 3.2.* extended support ends in Apri 2024.
+# See: https://www.djangoproject.com/download/#supported-versions
+Django==3.2.17
 mysqlclient==2.1.1
-python-dotenv==0.21.0
+python-dotenv==0.21.1
