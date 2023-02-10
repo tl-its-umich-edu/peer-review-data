@@ -18,5 +18,10 @@ python manage.py migrate
 echo 'Running main application…'
 python manage.py run
 
-# for debugging purposes, keep container running after job completes
-sleep 14400 # 4 hours
+if [ -n "${DOCKER_KEEP_ALIVE_TIME}" ]; then
+  # for debugging purposes, keep container running after job completes
+  echo 'DOCKER_KEEP_ALIVE_TIME is set to "'"${DOCKER_KEEP_ALIVE_TIME}"'".  ' \
+    'Will keep container running for that amount of time.  ' \
+    '(If no unit is specified, the time is in seconds.)'
+  sleep "${DOCKER_KEEP_ALIVE_TIME}"
+fi
