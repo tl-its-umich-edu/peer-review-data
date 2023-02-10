@@ -15,13 +15,15 @@ from canvasapi.user import User
 
 LOGGER: Logger = getLogger(__name__)
 
-CANVAS_API_URL: str = os.getenv('CANVAS_API_URL',
-                                'https://canvas-test.it.umich.edu/')
+CANVAS_BASE_URL: str = os.getenv('CANVAS_BASE_URL')
 CANVAS_API_TOKEN: str = os.getenv('CANVAS_API_TOKEN')
 COURSE_ID: str = os.getenv('COURSE_ID')
 ASSIGNMENT_ID: str = os.getenv('ASSIGNMENT_ID')
 
 envErrors = []
+
+if CANVAS_BASE_URL is None:
+    envErrors.append('CANVAS_BASE_URL')
 
 if CANVAS_API_TOKEN is None:
     envErrors.append('CANVAS_API_TOKEN')
@@ -37,7 +39,7 @@ if len(envErrors) > 0:
                     f'{", ".join(envErrors)}')
     sys.exit()
 
-canvas = Canvas(CANVAS_API_URL, CANVAS_API_TOKEN)
+canvas = Canvas(CANVAS_BASE_URL, CANVAS_API_TOKEN)
 
 
 class CanvasUser(User):
