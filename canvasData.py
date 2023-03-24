@@ -18,7 +18,7 @@ LOGGER: Logger = getLogger(__name__)
 CANVAS_BASE_URL: str = os.getenv('CANVAS_BASE_URL')
 CANVAS_API_TOKEN: str = os.getenv('CANVAS_API_TOKEN')
 COURSE_ID: str = os.getenv('COURSE_ID')
-ASSIGNMENT_ID: str = os.getenv('ASSIGNMENT_ID')
+# ASSIGNMENT_ID: str = os.getenv('ASSIGNMENT_ID')
 
 envErrors = []
 
@@ -31,8 +31,8 @@ if CANVAS_API_TOKEN is None:
 if COURSE_ID is None:
     envErrors.append('COURSE_ID')
 
-if ASSIGNMENT_ID is None:
-    envErrors.append('ASSIGNMENT_ID')
+# if ASSIGNMENT_ID is None:
+#     envErrors.append('ASSIGNMENT_ID')
 
 if len(envErrors) > 0:
     LOGGER.critical('The following environment variable(s) are not set: '
