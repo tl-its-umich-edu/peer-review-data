@@ -18,7 +18,7 @@ def saveCourseAndUsers(canvasCourse: CanvasCourse) -> (bool, Course):
     course.save()
 
     LOGGER.info(f'Saving users of {course}…')
-    for canvasUser in canvasCourse.get_users():
+    for canvasUser in canvasCourse.get_users(**{'include[]':'test_student'}):
         try:
             user = models.User.fromCanvasUser(canvasUser)
             LOGGER.debug(f'Saving {user}…')
