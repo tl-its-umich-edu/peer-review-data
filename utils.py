@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import json
+import pickle
 from typing import List
 
 
@@ -32,3 +34,10 @@ def dictKeepKeys(d: dict | object, keysToKeep: List[str]) -> dict:
     except:
         pass
     return {k: v for k, v in d.items() if k in keysToKeep}
+
+
+def canvasJson(o: object) -> str:
+    return json.dumps(dictSkipKeys(o, ['_requester']), indent=2, default=str)
+    # json.dumps(
+    #     dictSkipKeys(canvasAssessment, ['_requester']),
+    #     indent=2, default=str)
