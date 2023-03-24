@@ -42,11 +42,11 @@ def saveSubmissions(canvasAssignment: CanvasAssignment):
         for untyped submissions eliminates those from "Test Student" and
         possibly others.
         '''
-        if canvasSubmission.submission_type is None:
-            LOGGER.warning('Skipping untyped submission '
-                           f'({canvasSubmission.id}) for '
-                           f'user ID ({canvasSubmission.user_id}).')
-            continue
+        # if canvasSubmission.submission_type is None:
+        #     LOGGER.warning('Skipping untyped submission '
+        #                    f'({canvasSubmission.id}) for '
+        #                    f'user ID ({canvasSubmission.user_id}).')
+        #     continue
 
         try:
             submission: models.Submission = \
