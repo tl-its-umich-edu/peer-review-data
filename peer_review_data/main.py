@@ -107,12 +107,16 @@ def saveAssessmentsAndComments(
         try:
             assessment = \
                 models.Assessment.fromCanvasAssessment(canvasAssessment)
+
+            if assessment is None:
+                continue
+
             LOGGER.debug(f'Saving {assessment}…')
             assessment.save()
         except Exception as e:
             # XXX: Catches assessments referring to non-existent submissions!
             LOGGER.warning(f'Error saving Assessment '
-                           f'({canvasAssessment.id}): {e}')
+                           f'({canvasAssessment.id}; Submission: {canvasAssessment.submissionId}): {e}')
             LOGGER.debug('Assessment data: ' + json.dumps(
                 dictSkipKeys(canvasAssessment, ['_requester']),
                 indent=2, default=str))
