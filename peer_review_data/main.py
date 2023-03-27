@@ -99,9 +99,8 @@ def saveAssessmentsAndComments(
     for canvasAssessment in [CanvasAssessment(a) for a in
                              canvasAssessments]:
         if not canvasAssessment.isPeerReview:
-            LOGGER.info('Skipping non-peer-review assessment '
-                        f'({canvasAssessment.id}).')
-            continue
+            LOGGER.warning(f'Assessment ({canvasAssessment.id}) '
+                           'is NOT a peer-review.')
 
         assessment: models.Assessment = None
         try:
@@ -114,12 +113,14 @@ def saveAssessmentsAndComments(
             LOGGER.debug(f'Saving {assessment}…')
             assessment.save()
         except Exception as e:
-            # XXX: Catches assessments referring to non-existent submissions!
-            LOGGER.warning(f'Error saving Assessment '
-                           f'({canvasAssessment.id}; Submission: {canvasAssessment.submissionId}): {e}')
+            # XXX: Catch assessment referring to missing assessor or submission
+            LOGGER.warning(f'Error saving Assessment ({canvasAssessment.id}; '
+                           f'Submission: {canvasAssessment.submissionId}; '
+                           f'Assessor: {canvasAssessment.assessorId}): {e}')
             LOGGER.debug('Assessment data: ' + json.dumps(
                 dictSkipKeys(canvasAssessment, ['_requester']),
                 indent=2, default=str))
+            continue
 
         if assessment:
             canvasComment: CanvasComment
