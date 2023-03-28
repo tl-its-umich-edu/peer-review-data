@@ -23,5 +23,7 @@ if [ -n "${DOCKER_KEEP_ALIVE_TIME}" ]; then
   echo 'DOCKER_KEEP_ALIVE_TIME is set to "'"${DOCKER_KEEP_ALIVE_TIME}"'".  ' \
     'Will keep container running for that amount of time.  ' \
     '(If no unit is specified, the time is in seconds.)'
+  echo $(date --rfc-3339=seconds) '- Wait begins…'
   sleep "${DOCKER_KEEP_ALIVE_TIME}"
+  echo $(date --rfc-3339=seconds) '- Wait ends.'
 fi
