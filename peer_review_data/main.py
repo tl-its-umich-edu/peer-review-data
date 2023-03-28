@@ -140,7 +140,9 @@ def main() -> None:
     timeStart: datetime = datetime.now(tz=utc)
     LOGGER.info(f'Start time: {timeStart.isoformat(timespec="milliseconds")}')
 
-    canvasCourse: CanvasCourse = canvas.get_course(COURSE_ID)
+    courseId: str
+    for courseId in config.COURSE_IDS_CSV.split(','):
+        canvasCourse: CanvasCourse = canvas.get_course(courseId)
     LOGGER.info(f'Found course ({canvasCourse.id}): "{canvasCourse.name}"')
     courseSaved = False
     course: models.Course | None = None
@@ -166,8 +168,8 @@ def main() -> None:
 
     if canvasAssignment.peer_reviews is not True:
         LOGGER.info(
-            # f'Skipping assignment ({assignmentId}) in course ({COURSE_ID}): '
-            f'Skipping assignment ({canvasAssignment.id}) in course ({COURSE_ID}): '
+                    f'Skipping assignment ({canvasAssignment.id}) '
+                    f'in course ({courseId}): '
             'Not configured for peer reviews.')
         sys.exit()
 
@@ -187,23 +189,23 @@ def main() -> None:
     if not hasattr(canvasAssignmentRubric, 'assessments'):
         # LOGGER.info(f'Skipping assignment ({assignmentId}) in '
         LOGGER.info(f'Skipping assignment ({canvasAssignment.id}) in '
-                    f'course ({COURSE_ID}): Not configured for peer reviews '
-                    '("assessments").')
+                            f'course ({courseId}): '
+                            'Not configured for peer reviews ("assessments").')
         sys.exit()
 
-    # LOGGER.info(f'Assignment ({assignmentId}) in course ({COURSE_ID}) is '
-    LOGGER.info(f'Assignment ({canvasAssignment.id}) in course ({COURSE_ID}) is '
+            LOGGER.info(f'Assignment ({canvasAssignment.id}) '
+                        f'in course ({courseId}) is '
                 'configured for peer reviews ("assessments")…')
 
     if len(canvasAssignmentRubric.assessments) == 0:
         LOGGER.info(
-            # f'Skipping assignment ({assignmentId}) in course ({COURSE_ID}): '
-            f'Skipping assignment ({canvasAssignment.id}) in course ({COURSE_ID}): '
+                    f'Skipping assignment ({canvasAssignment.id}) '
+                    f'in course ({courseId}): '
             'No peer reviews ("assessments") were found.')
         sys.exit()
 
-    # LOGGER.info(f'Assignment ({assignmentId}) in course ({COURSE_ID}) has '
-    LOGGER.info(f'Assignment ({canvasAssignment.id}) in course ({COURSE_ID}) has '
+            LOGGER.info(f'Assignment ({canvasAssignment.id}) '
+                        f'in course ({courseId}) has '
                 'peer reviews ("assessments")…')
 
     if not courseSaved:
