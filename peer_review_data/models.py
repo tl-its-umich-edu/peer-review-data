@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import Self, \
-    Optional  # Cannot find reference 'Self' in 'typing.pyi'
+from typing import Optional, \
+    Self, NewType  # XXX: Cannot find reference 'Self' in 'typing.pyi' (?!)
 
 from django.db import models
 
@@ -126,43 +126,15 @@ class Assessment(models.Model):
 
     @classmethod
     def fromCanvasAssessment(cls, a: CanvasAssessment) -> Optional[Self]:
-        '''
+        """
         Create an Assessment model object from a CanvasAssessment object.
         :param a: CanvasAssessment object
         :return: Assessment model object
-        '''
-
-        '''
-        The following two blocks of code query for assessors and submissions.
-        The results aren't used for anything, but if the blocks of code are
-        removed, saving the assessment may cause an error about missing
-        assessors or missing submissions.  This may be caused by some kind of
-        DB delayed commit issue.
-        '''
-
-        # assessor: User = None
-        # try:
-        #     assessor = User.objects.get(id=a.assessorId)
-        #     LOGGER.debug(f'Assessment ({a.id}): '
-        #                  f'found assessor ({assessor})!')
-        # except Exception as e:
-        #     LOGGER.warning(f'Assessment ({a.id}): '
-        #                    f'assessor ID ({a.assessorId}) not found!')
-        #
-        # submission: Submission = None
-        # try:
-        #     submission = Submission.objects.get(id=a.submissionId)
-        #     LOGGER.debug(f'Assessment ({a.id}): '
-        #                  f'found submission ({submission})!')
-        # except Exception as e:
-        #     LOGGER.warning(f'Assessment ({a.id}): '
-        #                    f'submission ID ({a.submissionId}) not found!')
+        """
 
         assessment: Self = None
 
-        # if assessor and submission:
         try:
-            # assessment = cls(a.id, assessor.id, submission.id)
             assessment = cls(a.id, a.assessorId, a.submissionId)
         except Exception as e:
             LOGGER.warning(f'Unable to instantiate Assessment: {e}')
@@ -173,7 +145,6 @@ class Assessment(models.Model):
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): ' \
                f'({self.assessor}; {self.submission})'
-
 
 class Comment(models.Model):
     """
