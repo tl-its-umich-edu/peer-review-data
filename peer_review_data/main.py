@@ -1,18 +1,29 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 from datetime import datetime, timedelta
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 from django.utils.timezone import utc
 
-from canvasData import *
+import config
+from canvasData import (
+    canvas,
+    CanvasAssessment,
+    CanvasAssignment,
+    CanvasCourse,
+    CanvasComment,
+    CanvasCriteria,
+    CanvasRubric,
+    CanvasSubmission
+)
 from peer_review_data import models
 from utils import dictSkipKeys
 
-LOGGER: Logger = getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
-def saveCourseAndUsers(canvasCourse: CanvasCourse) -> Course:
+def saveCourseAndUsers(canvasCourse: CanvasCourse) -> models.Course:
     course = models.Course.fromCanvasCourse(canvasCourse)
     LOGGER.info(f'Saving {course}…')
     course.save()
@@ -41,7 +52,7 @@ def saveCourseAndUsers(canvasCourse: CanvasCourse) -> Course:
 
 
 def saveSubmissions(canvasAssignment: CanvasAssignment):
-    canvasSubmissions: List[CanvasSubmission] = \
+    canvasSubmissions: list[CanvasSubmission] = \
         canvasAssignment.get_submissions()
 
     for canvasSubmission in canvasSubmissions:
@@ -59,7 +70,7 @@ def saveSubmissions(canvasAssignment: CanvasAssignment):
 
 def saveRubricAndCriteria(canvasRubric: CanvasRubric,
                           canvasAssignment: CanvasAssignment
-                          ) -> [Rubric, Dict[int, models.Criterion]]:
+                          ) -> Tuple[models.Rubric, Dict[int, models.Criterion]]:
     rubric = models.Rubric.fromCanvasRubricAndAssignment(canvasRubric,
                                                          canvasAssignment)
     LOGGER.info(f'Saving {rubric}…')
@@ -83,7 +94,7 @@ def saveRubricAndCriteria(canvasRubric: CanvasRubric,
 
 
 def saveAssessmentsAndComments(
-        canvasAssessments: List[CanvasAssessment]) -> None:
+        canvasAssessments: list[CanvasAssessment]) -> None:
     """
     Given a list of `CanvasAssessment` objects, save those that are
     peer reviews.  When saving assessments, save their
@@ -143,7 +154,7 @@ def main() -> None:
         courseSaved = False
         course: models.Course | None = None
 
-        canvasAssignments: List[CanvasAssignment] = \
+        canvasAssignments: list[CanvasAssignment] = \
             canvasCourse.get_assignments()
 
         canvasAssignment: CanvasAssignment

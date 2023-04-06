@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import Optional, \
-    Self, NewType  # XXX: Cannot find reference 'Self' in 'typing.pyi' (?!)
+from typing import Optional, Self
 
 from django.db import models
 
-from canvasData import *
+from canvasData import (
+    CanvasAssessment,
+    CanvasAssignment,
+    CanvasComment,
+    CanvasCriteria,
+    CanvasCourse,
+    CanvasRubric,
+    CanvasSubmission,
+    CanvasUser
+)
 
 LOGGER = logging.getLogger(__name__)
 
