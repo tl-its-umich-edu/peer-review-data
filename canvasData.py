@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from logging import Logger, getLogger
 from typing import List
 
 from canvasapi import Canvas
@@ -10,8 +9,6 @@ from canvasapi.submission import Submission
 from canvasapi.user import User
 
 import config
-
-LOGGER: Logger = getLogger(__name__)
 
 canvas = Canvas(config.CANVAS_BASE_URL, config.CANVAS_API_TOKEN)
 
