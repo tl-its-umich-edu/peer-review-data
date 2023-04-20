@@ -2,7 +2,7 @@
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, List
 
 from canvasapi.course import Course
 from canvasapi.rubric import Rubric
@@ -54,7 +54,7 @@ def saveCourseAndUsers(canvasCourse: CanvasCourse) -> models.Course:
 
 
 def saveSubmissions(canvasAssignment: CanvasAssignment):
-    canvasSubmissions: list[CanvasSubmission] = \
+    canvasSubmissions: List[CanvasSubmission] = \
         canvasAssignment.get_submissions()
 
     for canvasSubmission in canvasSubmissions:
@@ -96,7 +96,7 @@ def saveRubricAndCriteria(canvasRubric: CanvasRubric,
 
 
 def saveAssessmentsAndComments(
-        canvasAssessments: list[CanvasAssessment]) -> None:
+        canvasAssessments: List[CanvasAssessment]) -> None:
     """
     Given a list of `CanvasAssessment` objects, save those that are
     peer reviews.  When saving assessments, save their
@@ -156,7 +156,7 @@ def main() -> None:
         courseSaved = False
         course: models.Course | None = None
 
-        canvasAssignments: list[CanvasAssignment] = \
+        canvasAssignments: List[CanvasAssignment] = \
             canvasCourse.get_assignments()
 
         canvasAssignment: CanvasAssignment
