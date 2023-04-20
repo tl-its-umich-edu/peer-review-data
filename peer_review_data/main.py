@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 import json
 from datetime import datetime, timedelta
-from typing import Dict, Optional
+from logging import Logger, getLogger
+from typing import Dict, Optional, List
 
+from canvasapi.course import Course
+from canvasapi.rubric import Rubric
 from django.utils.timezone import utc
 
-from canvasData import *
+import config
+from canvasData import canvas, CanvasAssessment, CanvasCourse, CanvasRubric, \
+    CanvasAssignment, CanvasComment, CanvasSubmission, CanvasCriteria
 from peer_review_data import models
 from utils import dictSkipKeys
 
