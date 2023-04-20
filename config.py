@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from logging import Logger, getLogger
+from typing import List
 
 import sys
 
@@ -25,3 +26,5 @@ if len(envErrors) > 0:
     LOGGER.critical('The following environment variable(s) are not set: '
                     f'{", ".join(envErrors)}')
     sys.exit()
+
+COURSE_IDS: List[str] = [c.strip() for c in COURSE_IDS_CSV.split(',')]

@@ -4,6 +4,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple
 
+from canvasapi.course import Course
+from canvasapi.rubric import Rubric
 from django.utils.timezone import utc
 
 import config
@@ -148,7 +150,7 @@ def main() -> None:
     LOGGER.info(f'Start time: {timeStart.isoformat(timespec="milliseconds")}')
 
     courseId: str
-    for courseId in [c.strip() for c in config.COURSE_IDS_CSV.split(',')]:
+    for courseId in config.COURSE_IDS:
         canvasCourse: CanvasCourse = canvas.get_course(courseId)
         LOGGER.info(f'Found course ({canvasCourse.id}): "{canvasCourse.name}"')
         courseSaved = False
