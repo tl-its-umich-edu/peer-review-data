@@ -1,18 +1,27 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import Optional, \
-    Self, NewType  # XXX: Cannot find reference 'Self' in 'typing.pyi' (?!)
+from typing import Optional, Self
 
+import canvasapi
 from django.db import models
 
-from canvasData import *
+from canvasData import (
+    CanvasAssessment,
+    CanvasAssignment,
+    CanvasComment,
+    CanvasCriteria,
+    CanvasCourse,
+    CanvasRubric,
+    CanvasSubmission,
+    CanvasUser
+)
 
 LOGGER = logging.getLogger(__name__)
 
 
 class Course(models.Model):
     class Meta:
-        db_table = Course.__name__.lower()
+        db_table = canvasapi.course.Course.__name__.lower()
 
     id = models.IntegerField(primary_key=True)
     name = models.TextField()
@@ -28,7 +37,7 @@ class Course(models.Model):
 
 class User(models.Model):
     class Meta:
-        db_table = User.__name__.lower()
+        db_table = canvasapi.user.User.__name__.lower()
 
     id = models.IntegerField(primary_key=True)
     name = models.TextField()
@@ -45,7 +54,7 @@ class User(models.Model):
 
 class Assignment(models.Model):
     class Meta:
-        db_table = Assignment.__name__.lower()
+        db_table = canvasapi.assignment.Assignment.__name__.lower()
 
     id = models.IntegerField(primary_key=True)
     name = models.TextField()
@@ -61,7 +70,7 @@ class Assignment(models.Model):
 
 class Rubric(models.Model):
     class Meta:
-        db_table = Rubric.__name__.lower()
+        db_table = canvasapi.rubric.Rubric.__name__.lower()
 
     id = models.IntegerField(primary_key=True)
     title = models.TextField()
@@ -100,7 +109,7 @@ class Criterion(models.Model):
 
 class Submission(models.Model):
     class Meta:
-        db_table = Submission.__name__.lower()
+        db_table = canvasapi.submission.Submission.__name__.lower()
 
     id = models.IntegerField(primary_key=True)
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
