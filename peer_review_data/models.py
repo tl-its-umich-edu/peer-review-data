@@ -146,6 +146,7 @@ class Assessment(models.Model):
         return f'{self.__class__.__name__} ({self.id}): ' \
                f'({self.assessor}; {self.submission})'
 
+
 class Comment(models.Model):
     """
     Strictly speaking, this should be `AssessmentComment`.  This app will
