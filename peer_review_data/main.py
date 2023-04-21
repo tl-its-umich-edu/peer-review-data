@@ -27,10 +27,10 @@ LOGGER = logging.getLogger(__name__)
 
 def saveCourseAndUsers(canvasCourse: CanvasCourse) -> models.Course:
     course = models.Course.fromCanvasCourse(canvasCourse)
-    LOGGER.info(f'Saving {course}…')
+    LOGGER.debug(f'Saving {course}…')
     course.save()
 
-    LOGGER.info(f'Saving users of {course}…')
+    LOGGER.debug(f'Saving users of {course}…')
     '''
     Possible bug in `canvasapi` module…
     When calling `get_users` with the argument `include='test_student'`, the
@@ -71,11 +71,10 @@ def saveSubmissions(canvasAssignment: CanvasAssignment):
 
 
 def saveRubricAndCriteria(canvasRubric: CanvasRubric,
-                          canvasAssignment: CanvasAssignment
-                          ) -> Tuple[models.Rubric, Dict[int, models.Criterion]]:
+                          canvasAssignment: CanvasAssignment):
     rubric = models.Rubric.fromCanvasRubricAndAssignment(canvasRubric,
                                                          canvasAssignment)
-    LOGGER.info(f'Saving {rubric}…')
+    LOGGER.debug(f'Saving {rubric}…')
     rubric.save()
 
     criteria: Dict[int, models.Criterion] = {}
@@ -88,7 +87,7 @@ def saveRubricAndCriteria(canvasRubric: CanvasRubric,
     for canvasCriterion in canvasRubric.data:
         criterion = models.Criterion.fromCanvasCriterionAndRubric(
             CanvasCriteria(canvasCriterion), rubric)
-        LOGGER.info(f'Saving {criterion}…')
+        LOGGER.debug(f'Saving {criterion}…')
         criterion.save()
         criteria[criterion.id] = criterion
 
@@ -145,16 +144,8 @@ def saveAssessmentsAndComments(
                 LOGGER.warning(f'Error saving {comment}: {e}')
 
 
-def main() -> None:
-    timeStart: datetime = datetime.now(tz=utc)
-    LOGGER.info(f'Start time: {timeStart.isoformat(timespec="milliseconds")}')
-
-    courseId: str
-    for courseId in config.COURSE_IDS:
-        canvasCourse: CanvasCourse = canvas.get_course(courseId)
-        LOGGER.info(f'Found course ({canvasCourse.id}): "{canvasCourse.name}"')
+def processCourseAssignments(canvasCourse: CanvasCourse):
         courseSaved = False
-        course: models.Course | None = None
 
         canvasAssignments: List[CanvasAssignment] = \
             canvasCourse.get_assignments()
@@ -162,9 +153,9 @@ def main() -> None:
         canvasAssignment: CanvasAssignment
         # Iterate over assignments which have peer reviews
         for canvasAssignment in filter(
-                lambda a: a.peer_reviews, canvasAssignments):
-            LOGGER.info(
-                f'Found peer reviewed assignment ({canvasAssignment.id}): '
+            lambda a: a.peer_reviews is True, canvasAssignments):
+        LOGGER.debug(f'Found peer reviewed assignment '
+                     f'({canvasAssignment.id}): '
                 f'"{canvasAssignment.name}"')
 
             assignmentRubricId: int = canvasAssignment.rubric_settings.get(
@@ -176,26 +167,27 @@ def main() -> None:
                 assignmentRubricId, include='assessments', style='full')
 
             if not hasattr(canvasAssignmentRubric, 'assessments'):
-                LOGGER.info(f'Skipping assignment ({canvasAssignment.id}) in '
-                            f'course ({courseId}): '
-                            'Not configured for peer reviews ("assessments").')
+            LOGGER.debug(f'Skipping assignment ({canvasAssignment.id}) in '
+                         f'course ({canvasCourse.id}): Not configured '
+                         f'for peer reviews ("assessments").')
                 continue
 
-            LOGGER.info(f'Assignment ({canvasAssignment.id}) '
-                        f'in course ({courseId}) is '
+        LOGGER.debug(f'Assignment ({canvasAssignment.id}) '
+                     f'in course ({canvasCourse.id}) is '
                         'configured for peer reviews ("assessments")…')
 
             if len(canvasAssignmentRubric.assessments) == 0:
-                LOGGER.info(
+            LOGGER.debug(
                     f'Skipping assignment ({canvasAssignment.id}) '
-                    f'in course ({courseId}): '
+                f'in course ({canvasCourse.id}): '
                     'No peer reviews ("assessments") were found.')
                 continue
 
             LOGGER.info(f'Assignment ({canvasAssignment.id}) '
-                        f'in course ({courseId}) has '
+                    f'in course ({canvasCourse.id}) has '
                         'peer reviews ("assessments")…')
 
+        course: Optional[models.Course] = None
             if not courseSaved:
                 course = saveCourseAndUsers(canvasCourse)
                 if course:
@@ -207,18 +199,29 @@ def main() -> None:
 
             assignment: models.Assignment = \
                 models.Assignment.fromCanvasAssignment(canvasAssignment)
-            LOGGER.info(f'Saving {assignment}…')
+        LOGGER.debug(f'Saving {assignment}…')
             assignment.save()
 
-            LOGGER.info(f'Saving submissions for {assignment}…')
+        LOGGER.debug(f'Saving submissions for {assignment}…')
             saveSubmissions(canvasAssignment)
 
-            LOGGER.info('Saving rubric and criteria…')
-            rubric, criteria = saveRubricAndCriteria(
-                canvasAssignmentRubric, canvasAssignment)
+        LOGGER.debug(f'Saving rubric and criteria for {assignment}…')
+        saveRubricAndCriteria(canvasAssignmentRubric, canvasAssignment)
 
-            LOGGER.info('Saving assessments and comments…')
+        LOGGER.debug(f'Saving assessments and comments for {assignment}…')
             saveAssessmentsAndComments(canvasAssignmentRubric.assessments)
+
+
+def main() -> None:
+    timeStart: datetime = datetime.now(tz=utc)
+    LOGGER.info(f'Start time: {timeStart.isoformat(timespec="milliseconds")}')
+
+    courseId: str
+    for courseId in config.COURSE_IDS:
+        canvasCourse: CanvasCourse = canvas.get_course(courseId)
+        LOGGER.info(f'Checking course ({canvasCourse.id}): '
+                    f'"{canvasCourse.name}"…')
+        processCourseAssignments(canvasCourse)
 
     timeEnd: datetime = datetime.now(tz=utc)
     timeElapsed: timedelta = timeEnd - timeStart
