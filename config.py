@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 from logging import Logger, getLogger
 from typing import List
-
-import sys
 
 LOGGER: Logger = getLogger(__name__)
 
