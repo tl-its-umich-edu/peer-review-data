@@ -2,7 +2,6 @@
 import logging
 from typing import Optional, Self
 
-import canvasapi
 from django.db import models
 
 from canvasData import (
