@@ -12,10 +12,7 @@ def dictSkipKeys(d: dict | object, keysToSkip: List[str]) -> dict:
     :param keysToKeep: A `List` of `str` key names to be skipped.
     :return: A `dict` without the specified keys.
     """
-    try:
-        d = d.__dict__
-    except NameError:
-        pass
+    d = getattr(d, '__dict__', d)
     return {k: v for k, v in d.items() if k not in keysToSkip}
 
 
@@ -28,10 +25,7 @@ def dictKeepKeys(d: dict | object, keysToKeep: List[str]) -> dict:
     :param keysToKeep: A `List` of `str` key names to be kept.
     :return: A `dict` with only the specified keys.
     """
-    try:
-        d = d.__dict__
-    except NameError:
-        pass
+    d = getattr(d, '__dict__', d)
     return {k: v for k, v in d.items() if k in keysToKeep}
 
 
