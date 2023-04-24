@@ -10,7 +10,7 @@ CANVAS_BASE_URL: str = os.getenv('CANVAS_BASE_URL')
 CANVAS_API_TOKEN: str = os.getenv('CANVAS_API_TOKEN')
 COURSE_IDS_CSV: str = os.getenv('COURSE_IDS_CSV')
 COURSE_IDS: List[str] = [
-    c.strip() for c in COURSE_IDS_CSV.split(',') if c
+    c.strip() for c in COURSE_IDS_CSV.split(',') if c.isdigit()
 ] if COURSE_IDS_CSV else None
 
 
