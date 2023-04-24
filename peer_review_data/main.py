@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Dict, Optional, List
 
+import canvasapi.exceptions as canvasApiExceptions
 from django.utils.timezone import utc
 
 import config
@@ -169,6 +170,11 @@ def processCourseAssignments(canvasCourse: CanvasCourse):
                      f'({canvasAssignment.id}): '
                      f'"{canvasAssignment.name}"')
 
+        if 'rubric_settings' not in dir(canvasAssignment):
+            LOGGER.debug(f'Skipping Assignment ({canvasAssignment.id}): '
+                         'No rubric.')
+            continue
+
         assignmentRubricId: int = canvasAssignment.rubric_settings.get(
             'id')
         LOGGER.debug(f'Assignment ({canvasAssignment.id}) has '
@@ -227,9 +233,18 @@ def main() -> None:
     timeStart: datetime = datetime.now(tz=utc)
     LOGGER.info(f'Start time: {timeStart.isoformat(timespec="milliseconds")}')
 
+    LOGGER.debug(f'COURSE_IDS_CSV = "{config.COURSE_IDS_CSV}"')
+    LOGGER.info(f'Processing courses: ({", ".join(config.COURSE_IDS)})')
+
     courseId: str
+    canvasCourse: CanvasCourse
     for courseId in config.COURSE_IDS:
-        canvasCourse: CanvasCourse = canvas.get_course(courseId)
+        try:
+            canvasCourse = canvas.get_course(courseId)
+        except canvasApiExceptions.ResourceDoesNotExist:
+            LOGGER.warning(f'Course ID ({courseId}) not found.')
+            continue
+
         LOGGER.info(f'Checking course ({canvasCourse.id}): '
                     f'"{canvasCourse.name}"…')
         processCourseAssignments(canvasCourse)
