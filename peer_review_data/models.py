@@ -1,17 +1,26 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import Self  # Cannot find reference 'Self' in 'typing.pyi'
+from typing import Optional, Self
 
 from django.db import models
 
-from canvasData import *
+from canvasData import (
+    CanvasAssessment,
+    CanvasAssignment,
+    CanvasComment,
+    CanvasCriteria,
+    CanvasCourse,
+    CanvasRubric,
+    CanvasSubmission,
+    CanvasUser
+)
 
 LOGGER = logging.getLogger(__name__)
 
 
 class Course(models.Model):
     class Meta:
-        db_table = Course.__name__.lower()
+        db_table = 'course'
 
     id = models.IntegerField(primary_key=True)
     name = models.TextField()
@@ -27,7 +36,7 @@ class Course(models.Model):
 
 class User(models.Model):
     class Meta:
-        db_table = User.__name__.lower()
+        db_table = 'user'
 
     id = models.IntegerField(primary_key=True)
     name = models.TextField()
@@ -44,7 +53,7 @@ class User(models.Model):
 
 class Assignment(models.Model):
     class Meta:
-        db_table = Assignment.__name__.lower()
+        db_table = 'assignment'
 
     id = models.IntegerField(primary_key=True)
     name = models.TextField()
@@ -60,7 +69,7 @@ class Assignment(models.Model):
 
 class Rubric(models.Model):
     class Meta:
-        db_table = Rubric.__name__.lower()
+        db_table = 'rubric'
 
     id = models.IntegerField(primary_key=True)
     title = models.TextField()
@@ -79,7 +88,6 @@ class Rubric(models.Model):
 class Criterion(models.Model):
     class Meta:
         db_table = 'criterion'
-        # db_table = Criterion.__name__.lower()  # XXX: error?!
 
     id = models.IntegerField(primary_key=True)
     description = models.TextField()
@@ -99,7 +107,7 @@ class Criterion(models.Model):
 
 class Submission(models.Model):
     class Meta:
-        db_table = Submission.__name__.lower()
+        db_table = 'submission'
 
     id = models.IntegerField(primary_key=True)
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
@@ -117,22 +125,28 @@ class Submission(models.Model):
 class Assessment(models.Model):
     class Meta:
         db_table = 'assessment'
-        # db_table = Assessment.__name__.lower()  # XXX: error?!
 
     id = models.IntegerField(primary_key=True)
     assessor = models.ForeignKey(User, on_delete=models.CASCADE)
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
     @classmethod
-    def fromCanvasAssessment(cls, a: CanvasAssessment) -> Self:
+    def fromCanvasAssessment(cls, a: CanvasAssessment) -> Optional[Self]:
+        """
+        Create an Assessment model object from a CanvasAssessment object.
+        :param a: CanvasAssessment object
+        :return: Assessment model object
+        """
 
-        submission: Submission = Submission.objects.get(id=a.submissionId)
-        if submission:
-            LOGGER.debug(f'Got ({submission})!')
-        else:
-            LOGGER.info('Could not find submission with ID '
-                        f'({a.submissionId})!')
-        return cls(a.id, a.assessorId, a.submissionId)
+        assessment: Self = None
+
+        try:
+            assessment = cls(a.id, a.assessorId, a.submissionId)
+        except Exception as e:
+            LOGGER.warning(f'Unable to instantiate Assessment: {e}')
+            LOGGER.warning((a.id, a.assessorId, a.submissionId))
+
+        return assessment
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): ' \
@@ -148,7 +162,6 @@ class Comment(models.Model):
 
     class Meta:
         db_table = 'comment'
-        # db_table = Comment.__name__.lower()  # XXX: error?!
 
     # Canvas does not give unique IDs for each comment!
     id = models.AutoField(primary_key=True)
