@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-import sys
-from typing import Optional
+from typing import Optional, Self
 
 from django.db import models
 
@@ -15,11 +14,6 @@ from canvasData import (
     CanvasSubmission,
     CanvasUser
 )
-
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
 
 LOGGER = logging.getLogger(__name__)
 
