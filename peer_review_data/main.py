@@ -111,7 +111,7 @@ def saveAssessmentsAndComments(
             LOGGER.warning(f'Assessment ({canvasAssessment.id}) '
                            'is NOT a peer-review.')
 
-        assessment: Optional[models.Assessment] = None
+        assessment: models.Assessment | None = None
         problemType: str = None
         problemObjectId: int = None
         problemException: str = None
