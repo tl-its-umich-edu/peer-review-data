@@ -112,9 +112,9 @@ def saveAssessmentsAndComments(
                            'is NOT a peer-review.')
 
         assessment: models.Assessment | None = None
-        problemType: str = None
-        problemObjectId: int = None
-        problemException: str = None
+        problemType: str | None = None
+        problemObjectId: int | None = None
+        problemException: str | None = None
         try:
             assessment = \
                 models.Assessment.fromCanvasAssessment(canvasAssessment)
@@ -175,8 +175,11 @@ def processCourseAssignments(canvasCourse: CanvasCourse):
                          'No rubric.')
             continue
 
-        assignmentRubricId: int = canvasAssignment.rubric_settings.get(
+        assignmentRubricId: int | None = canvasAssignment.rubric_settings.get(
             'id')
+        if assignmentRubricId is None:
+            raise ValueError('Rubric ID is null for '
+                             f'Assignment ({canvasAssignment.id}).')
         LOGGER.debug(f'Assignment ({canvasAssignment.id}) has '
                      f'rubric ID ({assignmentRubricId})')
 

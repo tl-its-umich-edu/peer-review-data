@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 import os
-import sys
 from logging import Logger, getLogger
-from typing import List
+
+import sys
 
 LOGGER: Logger = getLogger(__name__)
 
-CANVAS_BASE_URL: str = os.getenv('CANVAS_BASE_URL')
-CANVAS_API_TOKEN: str = os.getenv('CANVAS_API_TOKEN')
-COURSE_IDS_CSV: str = os.getenv('COURSE_IDS_CSV')
-COURSE_IDS: List[str] = [
+CANVAS_BASE_URL: str | None = os.getenv('CANVAS_BASE_URL')
+CANVAS_API_TOKEN: str | None = os.getenv('CANVAS_API_TOKEN')
+COURSE_IDS_CSV: str | None = os.getenv('COURSE_IDS_CSV')
+COURSE_IDS: list[str] | None = [
     c.strip() for c in COURSE_IDS_CSV.split(',') if c.isdigit()
 ] if COURSE_IDS_CSV else None
 
