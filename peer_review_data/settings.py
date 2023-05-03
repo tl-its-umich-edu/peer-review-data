@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 from typing import Any
 
 # Django settings
@@ -46,6 +47,7 @@ LOGGING: dict[str, Any] = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
             'formatter': 'standard'
         }
     },
