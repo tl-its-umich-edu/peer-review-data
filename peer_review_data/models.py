@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import Optional, Self
+from typing import Self
 
 from django.db import models
 
@@ -131,22 +131,13 @@ class Assessment(models.Model):
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
     @classmethod
-    def fromCanvasAssessment(cls, a: CanvasAssessment) -> Optional[Self]:
+    def fromCanvasAssessment(cls, a: CanvasAssessment) -> Self:
         """
         Create an Assessment model object from a CanvasAssessment object.
         :param a: CanvasAssessment object
         :return: Assessment model object
         """
-
-        assessment: Self = None
-
-        try:
-            assessment = cls(a.id, a.assessorId, a.submissionId)
-        except Exception as e:
-            LOGGER.warning(f'Unable to instantiate Assessment: {e}')
-            LOGGER.warning((a.id, a.assessorId, a.submissionId))
-
-        return assessment
+        return cls(a.id, a.assessorId, a.submissionId)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} ({self.id}): ' \
