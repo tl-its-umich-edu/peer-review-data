@@ -91,8 +91,6 @@ def saveRubricAndCriteria(canvasRubric: CanvasRubric,
         criterion.save()
         criteria[criterion.id] = criterion
 
-    return rubric, criteria
-
 
 def saveAssessmentsAndComments(
         canvasAssessments: List[CanvasAssessment]) -> None:
@@ -110,6 +108,7 @@ def saveAssessmentsAndComments(
         if not canvasAssessment.isPeerReview:
             LOGGER.warning(f'Assessment ({canvasAssessment.id}) '
                            'is NOT a peer-review.')
+            continue
 
         assessment: models.Assessment | None = None
         problemType: str | None = None
@@ -170,7 +169,7 @@ def processCourseAssignments(canvasCourse: CanvasCourse):
                      f'({canvasAssignment.id}): '
                      f'"{canvasAssignment.name}"')
 
-        if 'rubric_settings' not in dir(canvasAssignment):
+        if not hasattr(canvasAssignment, 'rubric_settings'):
             LOGGER.debug(f'Skipping Assignment ({canvasAssignment.id}): '
                          'No rubric.')
             continue
