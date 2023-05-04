@@ -1,32 +1,51 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, Optional, List
 
+import canvasapi.exceptions as canvasApiExceptions
 from django.utils.timezone import utc
 
-from canvasData import *
+import config
+from canvasData import (
+    canvas,
+    CanvasAssessment,
+    CanvasAssignment,
+    CanvasCourse,
+    CanvasComment,
+    CanvasCriteria,
+    CanvasRubric,
+    CanvasSubmission
+)
 from peer_review_data import models
+from peer_review_data.models import Submission, User
 from utils import dictSkipKeys
 
-LOGGER: Logger = getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
-def saveCourseAndUsers(canvasCourse: CanvasCourse) -> (bool, Course):
+def saveCourseAndUsers(canvasCourse: CanvasCourse):
     course = models.Course.fromCanvasCourse(canvasCourse)
-    LOGGER.info(f'Saving {course}…')
+    LOGGER.debug(f'Saving {course}…')
     course.save()
 
-    LOGGER.info(f'Saving users of {course}…')
-    for canvasUser in canvasCourse.get_users():
-        try:
-            user = models.User.fromCanvasUser(canvasUser)
-            LOGGER.debug(f'Saving {user}…')
-            user.save()
-        except Exception as e:
-            LOGGER.warning(f'Error saving {user}: {e}')
-
-    return True, course
+    LOGGER.debug(f'Saving users of {course}…')
+    '''
+    Possible bug in `canvasapi` module…
+    When calling `get_users` with the argument `include='test_student'`, the
+    module adds it to the URL as `include=test_studentanalytics_url`.  The
+    origin of the "analytics_url" string is unknown.  However, it's known that
+    the Canvas API expects the "include" argument to appear as `include[]`, so
+    by using a dictionary here with the key in the correct format, the bug is
+    bypassed and the argument appears correctly.
+    Strangely, a later call to `get_rubric` uses the `include` keyword argument
+    without problem.
+    '''
+    for canvasUser in canvasCourse.get_users(**{'include[]': 'test_student'}):
+        user = models.User.fromCanvasUser(canvasUser)
+        LOGGER.debug(f'Saving {user}…')
+        user.save()
 
 
 def saveSubmissions(canvasAssignment: CanvasAssignment):
@@ -34,38 +53,23 @@ def saveSubmissions(canvasAssignment: CanvasAssignment):
         canvasAssignment.get_submissions()
 
     for canvasSubmission in canvasSubmissions:
-        '''
-        The only untyped submission found during development was from
-        "Test Student".  It was discovered because that student wasn't
-        included with the rest of the course users and the relationship
-        between submission and missing user couldn't be created.  Testing
-        for untyped submissions eliminates those from "Test Student" and
-        possibly others.
-        '''
-        if canvasSubmission.submission_type is None:
-            LOGGER.warning('Skipping untyped submission '
-                           f'({canvasSubmission.id}) for '
-                           f'user ID ({canvasSubmission.user_id}).')
-            continue
-
         try:
             submission: models.Submission = \
                 models.Submission.fromCanvasSubmission(canvasSubmission)
             LOGGER.debug(f'Saving {submission}…')
             submission.save()
-        except Exception as e:
+        except TypeError as e:
             LOGGER.warning(f'Error saving Submission: {e}')
-            LOGGER.warning(json.dumps(
+            LOGGER.debug(json.dumps(
                 dictSkipKeys(canvasSubmission, ['_requester']),
                 indent=2, default=str))
 
 
 def saveRubricAndCriteria(canvasRubric: CanvasRubric,
-                          canvasAssignment: CanvasAssignment
-                          ) -> [Rubric, Dict[int, models.Criterion]]:
+                          canvasAssignment: CanvasAssignment):
     rubric = models.Rubric.fromCanvasRubricAndAssignment(canvasRubric,
                                                          canvasAssignment)
-    LOGGER.info(f'Saving {rubric}…')
+    LOGGER.debug(f'Saving {rubric}…')
     rubric.save()
 
     criteria: Dict[int, models.Criterion] = {}
@@ -78,18 +82,16 @@ def saveRubricAndCriteria(canvasRubric: CanvasRubric,
     for canvasCriterion in canvasRubric.data:
         criterion = models.Criterion.fromCanvasCriterionAndRubric(
             CanvasCriteria(canvasCriterion), rubric)
-        LOGGER.info(f'Saving {criterion}…')
+        LOGGER.debug(f'Saving {criterion}…')
         criterion.save()
         criteria[criterion.id] = criterion
-
-    return rubric, criteria
 
 
 def saveAssessmentsAndComments(
         canvasAssessments: List[CanvasAssessment]) -> None:
     """
-    Given a list of `CanvasAssessment` objects, skip those that are not
-    peer reviews and save the rest.  When saving assessments, save their
+    Given a list of `CanvasAssessment` objects, save those that are
+    peer reviews.  When saving assessments, save their
     comments with the appropriate model.
 
     :param canvasAssessments:
@@ -99,103 +101,145 @@ def saveAssessmentsAndComments(
     for canvasAssessment in [CanvasAssessment(a) for a in
                              canvasAssessments]:
         if not canvasAssessment.isPeerReview:
-            LOGGER.info('Skipping non-peer-review assessment '
-                        f'({canvasAssessment.id}).')
+            LOGGER.warning(f'Assessment ({canvasAssessment.id}) '
+                           'is NOT a peer-review.')
             continue
 
-        assessment: models.Assessment = None
+        assessment: models.Assessment | None = None
+        problemType: str | None = None
+        problemObjectId: int | None = None
+        problemException: str | None = None
         try:
             assessment = \
                 models.Assessment.fromCanvasAssessment(canvasAssessment)
+
+            if assessment is None:
+                continue
+
             LOGGER.debug(f'Saving {assessment}…')
             assessment.save()
-        except Exception as e:
-            # XXX: Catches assessments referring to non-existent submissions!
-            LOGGER.warning(f'Error saving Assessment '
-                           f'({canvasAssessment.id}): {e}')
-            LOGGER.debug('Assessment data: ' + json.dumps(
-                dictSkipKeys(canvasAssessment, ['_requester']),
-                indent=2, default=str))
+        except Submission.DoesNotExist as e:
+            problemType = 'Submission'
+            problemObjectId = canvasAssessment.submissionId
+            problemException = e
+        except User.DoesNotExist as e:
+            problemType = 'Assessor'
+            problemObjectId = canvasAssessment.assessorId
+            problemException = e
+        finally:
+            if problemType is not None:
+                LOGGER.warning(f'Error saving Assessment '
+                               f'({canvasAssessment.id}): '
+                               f'{problemType} ({problemObjectId}); '
+                               f'{problemException}')
+                LOGGER.debug('Assessment data: ' + json.dumps(
+                    dictSkipKeys(canvasAssessment, ['_requester']),
+                    indent=2, default=str))
+                continue
 
-        if assessment:
-            canvasComment: CanvasComment
-            for canvasComment in [CanvasComment(c) for c in
-                                  canvasAssessment.comments]:
-                try:
-                    comment: models.Comment = \
-                        models.Comment.fromCanvasCommentAndAssessment(
-                            canvasComment, assessment)
-                    LOGGER.debug(f'Saving {comment}…')
-                    comment.save()
-                except Exception as e:
-                    LOGGER.warning(f'Error saving {comment}: {e}')
+        canvasComment: CanvasComment
+        for canvasComment in [CanvasComment(c) for c in
+                              canvasAssessment.comments]:
+            try:
+                comment: models.Comment = \
+                    models.Comment.fromCanvasCommentAndAssessment(
+                        canvasComment, assessment)
+                LOGGER.debug(f'Saving {comment}…')
+                comment.save()
+            except TypeError as e:
+                LOGGER.warning(f'Error saving {comment}: {e}')
+
+
+def processCourseAssignments(canvasCourse: CanvasCourse):
+    courseSaved = False
+
+    canvasAssignments: List[CanvasAssignment] = \
+        canvasCourse.get_assignments()
+
+    canvasAssignment: CanvasAssignment
+    # Iterate over assignments which have peer reviews
+    for canvasAssignment in filter(
+            lambda a: a.peer_reviews is True, canvasAssignments):
+        LOGGER.debug(f'Found peer reviewed assignment '
+                     f'({canvasAssignment.id}): '
+                     f'"{canvasAssignment.name}"')
+
+        if not hasattr(canvasAssignment, 'rubric_settings'):
+            LOGGER.debug(f'Skipping Assignment ({canvasAssignment.id}): '
+                         'No rubric.')
+            continue
+
+        assignmentRubricId: int | None = canvasAssignment.rubric_settings.get(
+            'id')
+        if assignmentRubricId is None:
+            raise ValueError('Rubric ID is null for '
+                             f'Assignment ({canvasAssignment.id}).')
+        LOGGER.debug(f'Assignment ({canvasAssignment.id}) has '
+                     f'rubric ID ({assignmentRubricId})')
+
+        canvasAssignmentRubric: CanvasRubric = canvasCourse.get_rubric(
+            assignmentRubricId, include='assessments', style='full')
+
+        if not hasattr(canvasAssignmentRubric, 'assessments'):
+            LOGGER.debug(f'Skipping assignment ({canvasAssignment.id}) in '
+                         f'course ({canvasCourse.id}): Not configured '
+                         f'for peer reviews ("assessments").')
+            continue
+
+        LOGGER.debug(f'Assignment ({canvasAssignment.id}) '
+                     f'in course ({canvasCourse.id}) is '
+                     'configured for peer reviews ("assessments")…')
+
+        if len(canvasAssignmentRubric.assessments) == 0:
+            LOGGER.debug(
+                f'Skipping assignment ({canvasAssignment.id}) '
+                f'in course ({canvasCourse.id}): '
+                'No peer reviews ("assessments") were found.')
+            continue
+
+        LOGGER.info(f'Assignment ({canvasAssignment.id}) '
+                    f'in course ({canvasCourse.id}) has '
+                    'peer reviews ("assessments")…')
+
+        course: Optional[models.Course] = None
+        if not courseSaved:
+            saveCourseAndUsers(canvasCourse)
+            courseSaved = True
+
+        assignment: models.Assignment = \
+            models.Assignment.fromCanvasAssignment(canvasAssignment)
+        LOGGER.debug(f'Saving {assignment}…')
+        assignment.save()
+
+        LOGGER.debug(f'Saving submissions for {assignment}…')
+        saveSubmissions(canvasAssignment)
+
+        LOGGER.debug(f'Saving rubric and criteria for {assignment}…')
+        saveRubricAndCriteria(canvasAssignmentRubric, canvasAssignment)
+
+        LOGGER.debug(f'Saving assessments and comments for {assignment}…')
+        saveAssessmentsAndComments(canvasAssignmentRubric.assessments)
 
 
 def main() -> None:
     timeStart: datetime = datetime.now(tz=utc)
     LOGGER.info(f'Start time: {timeStart.isoformat(timespec="milliseconds")}')
 
-    canvasCourse: CanvasCourse = canvas.get_course(COURSE_ID)
-    LOGGER.info(f'Found course ({canvasCourse.id}): "{canvasCourse.name}"')
-    courseSaved = False
-    course: models.Course | None = None
-    user: models.User | None = None
+    LOGGER.debug(f'COURSE_IDS_CSV = "{config.COURSE_IDS_CSV}"')
+    LOGGER.info(f'Processing courses: ({", ".join(config.COURSE_IDS)})')
 
-    canvasAssignment: CanvasAssignment = canvasCourse.get_assignment(
-        ASSIGNMENT_ID)
-    LOGGER.info(
-        f'Found assignment ({canvasAssignment.id}): "{canvasAssignment.name}"')
+    courseId: str
+    canvasCourse: CanvasCourse
+    for courseId in config.COURSE_IDS:
+        try:
+            canvasCourse = canvas.get_course(courseId)
+        except canvasApiExceptions.ResourceDoesNotExist:
+            LOGGER.warning(f'Course ID ({courseId}) not found.')
+            continue
 
-    if canvasAssignment.peer_reviews is not True:
-        LOGGER.info(
-            f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
-            'Not configured for peer reviews.')
-        sys.exit()
-
-    LOGGER.info(f'Assignment ({canvasAssignment.id}) is peer reviewed')
-
-    assignmentRubricId: int = canvasAssignment.rubric_settings.get('id')
-    LOGGER.info(f'Assignment ({canvasAssignment.id}) has '
-                f'rubric ID ({assignmentRubricId})')
-
-    canvasAssignmentRubric: CanvasRubric = canvasCourse.get_rubric(
-        assignmentRubricId, include='assessments', style='full')
-
-    if not hasattr(canvasAssignmentRubric, 'assessments'):
-        LOGGER.info(f'Skipping assignment ({ASSIGNMENT_ID}) in '
-                    f'course ({COURSE_ID}): Not configured for peer reviews '
-                    '("assessments").')
-        sys.exit()
-
-    LOGGER.info(f'Assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}) is '
-                'configured for peer reviews ("assessments")…')
-
-    if len(canvasAssignmentRubric.assessments) == 0:
-        LOGGER.info(
-            f'Skipping assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}): '
-            'No peer reviews ("assessments") were found.')
-        sys.exit()
-
-    LOGGER.info(f'Assignment ({ASSIGNMENT_ID}) in course ({COURSE_ID}) has '
-                'peer reviews ("assessments")…')
-
-    if not courseSaved:
-        courseSaved, course = saveCourseAndUsers(canvasCourse)
-
-    assignment: models.Assignment = models.Assignment.fromCanvasAssignment(
-        canvasAssignment)
-    LOGGER.info(f'Saving {assignment}…')
-    assignment.save()
-
-    LOGGER.info(f'Saving submissions for {assignment}…')
-    saveSubmissions(canvasAssignment)
-
-    LOGGER.info('Saving rubric and criteria…')
-    rubric, criteria = saveRubricAndCriteria(canvasAssignmentRubric,
-                                             canvasAssignment)
-
-    LOGGER.info('Saving assessments and comments…')
-    saveAssessmentsAndComments(canvasAssignmentRubric.assessments)
+        LOGGER.info(f'Checking course ({canvasCourse.id}): '
+                    f'"{canvasCourse.name}"…')
+        processCourseAssignments(canvasCourse)
 
     timeEnd: datetime = datetime.now(tz=utc)
     timeElapsed: timedelta = timeEnd - timeStart

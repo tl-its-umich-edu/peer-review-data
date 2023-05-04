@@ -19,6 +19,7 @@ services:
       - ./.data/mysql:/var/lib/mysql:delegated
       - ./mysql:/docker-entrypoint-initdb.d:ro
     container_name: peer-review-data_db
+
   main:
     build:
       context: .

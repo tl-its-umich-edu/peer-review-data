@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
-import sys
-from logging import Logger, getLogger
 from typing import List
 
 from canvasapi import Canvas
@@ -11,33 +8,9 @@ from canvasapi.rubric import Rubric
 from canvasapi.submission import Submission
 from canvasapi.user import User
 
-# from canvasapi.canvas_object import CanvasObject
+import config
 
-LOGGER: Logger = getLogger(__name__)
-
-CANVAS_API_URL: str = os.getenv('CANVAS_API_URL',
-                                'https://canvas-test.it.umich.edu/')
-CANVAS_API_TOKEN: str = os.getenv('CANVAS_API_TOKEN')
-COURSE_ID: str = os.getenv('COURSE_ID')
-ASSIGNMENT_ID: str = os.getenv('ASSIGNMENT_ID')
-
-envErrors = []
-
-if CANVAS_API_TOKEN is None:
-    envErrors.append('CANVAS_API_TOKEN')
-
-if COURSE_ID is None:
-    envErrors.append('COURSE_ID')
-
-if ASSIGNMENT_ID is None:
-    envErrors.append('ASSIGNMENT_ID')
-
-if len(envErrors) > 0:
-    LOGGER.critical('The following environment variable(s) are not set: '
-                    f'{", ".join(envErrors)}')
-    sys.exit()
-
-canvas = Canvas(CANVAS_API_URL, CANVAS_API_TOKEN)
+canvas = Canvas(config.CANVAS_BASE_URL, config.CANVAS_API_TOKEN)
 
 
 class CanvasUser(User):
