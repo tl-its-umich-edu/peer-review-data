@@ -25,7 +25,7 @@ from utils import dictSkipKeys
 LOGGER = logging.getLogger(__name__)
 
 
-def saveCourseAndUsers(canvasCourse: CanvasCourse) -> models.Course:
+def saveCourseAndUsers(canvasCourse: CanvasCourse):
     course = models.Course.fromCanvasCourse(canvasCourse)
     LOGGER.debug(f'Saving {course}…')
     course.save()
@@ -43,14 +43,9 @@ def saveCourseAndUsers(canvasCourse: CanvasCourse) -> models.Course:
     without problem.
     '''
     for canvasUser in canvasCourse.get_users(**{'include[]': 'test_student'}):
-        try:
-            user = models.User.fromCanvasUser(canvasUser)
-            LOGGER.debug(f'Saving {user}…')
-            user.save()
-        except TypeError as e:
-            LOGGER.warning(f'Error saving {user}: {e}')
-
-    return course
+        user = models.User.fromCanvasUser(canvasUser)
+        LOGGER.debug(f'Saving {user}…')
+        user.save()
 
 
 def saveSubmissions(canvasAssignment: CanvasAssignment):
@@ -208,13 +203,8 @@ def processCourseAssignments(canvasCourse: CanvasCourse):
 
         course: Optional[models.Course] = None
         if not courseSaved:
-            course = saveCourseAndUsers(canvasCourse)
-            if course:
-                courseSaved = True
-            else:
-                LOGGER.error(f'Course ({canvasCourse.id}) '
-                             'and its users were not saved.')
-                continue
+            saveCourseAndUsers(canvasCourse)
+            courseSaved = True
 
         assignment: models.Assignment = \
             models.Assignment.fromCanvasAssignment(canvasAssignment)
